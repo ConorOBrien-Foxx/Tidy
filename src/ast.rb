@@ -138,9 +138,20 @@ def ast(code)
         elsif token.operator?
             args = stack.pop(token.type == :unary_operator ? 1 : 2)
             stack << ASTNode.new(token, args)
-        elsif token.type == :assign_range || token.type == :block_split
+        elsif token.type == :assign_range
             count = stack.pop.raw
             args = stack.pop(count)
+            stack << ASTNode.new(token, args)
+        elsif token.type == :block_split
+            count = stack.pop.raw
+            args = []
+            count.times {
+                if stack.last.type == :block_open
+                    stack.pop
+                    break
+                end
+                args << stack.pop
+            }
             stack << ASTNode.new(token, args)
         elsif token.type == :call_func
             args = stack.pop(token.raw)
