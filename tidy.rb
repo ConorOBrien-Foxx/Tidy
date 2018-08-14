@@ -2,6 +2,10 @@
 
 require_relative 'src/transpiler.rb'
 
+class TidyStopIteration < Exception
+
+end
+
 def print_enum(enum, separator=", ")
     copy = enum.to_enum
 
@@ -59,6 +63,10 @@ tidy_func_def(:out) { |*args|
         puts
     }
 }
+tidy_func_def(:readline) { |prompt, hist=true|
+    require 'readline'
+    Readline.readline(prompt, hist)
+}
 tidy_func_def(:write) { |*args|
     output = IO === args.first ? args.shift : STDOUT
     output.write *args.join
@@ -80,7 +88,15 @@ tidy_curry_def(:take) { |count, enum|
     enum.take(count)
 }
 tidy_func_def(:force) { |enum|
-    enum.force
+    result = []
+    begin
+        enum.each { |el|
+            result << el
+        }
+    rescue TidyStopIteration => e
+        result
+    end
+    result
 }
 tidy_func_def(:map) { |fn, enum|
     enum.map { |e| fn[e] }
@@ -197,6 +213,6 @@ if $0 == __FILE__
     code = File.read(ARGV[0], encoding: "utf-8") rescue ARGV[0]
     tr = Tidy2Ruby.new code
     code = tr.to_a.join("\n")
-    # puts code
+    puts code
     eval code
 end

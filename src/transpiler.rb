@@ -156,7 +156,13 @@ class Tidy2Ruby < TidyTranspiler
                 mapped = tree.children.map { |child|
                     "#{transpile child}"
                 }
-                "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
+                name = head.raw
+                case name
+                    when "break"
+                        "raise TidyStopIteration if #{mapped.map{|e|"(#{e})"}.join "&&"}"
+                    else
+                        "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
+                end
 
             elsif head.type == :make_block
                 params, body = tree.children
