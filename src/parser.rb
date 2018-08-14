@@ -5,7 +5,7 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     alias :inspect :to_s
 
     def data?
-        [:number, :atom, :word].include? type
+        [:number, :atom, :word, :infinity].include? type
     end
 
     def blank?
@@ -56,8 +56,8 @@ class TidyTokenizer
                 @col = 1
             else
                 @col += 1
-                @pos += 1
             end
+            @pos += 1
         }
     end
 
@@ -79,7 +79,7 @@ class TidyTokenizer
         ["b", "e", "."].include? c
     end
 
-    OPERATORS = ["-", "+", "*", "/", "//"].sort_by(&:size).reverse!
+    OPERATORS = ["-", "+", "*", "/", "//", "@"].sort_by(&:size).reverse!
     OPERATOR_REGEX = Regexp.new(OPERATORS.map { |e| Regexp.escape e } .join "|")
     def operator?
         has_ahead? OPERATOR_REGEX
@@ -115,6 +115,10 @@ class TidyTokenizer
             res.type = :operator
             res.raw = @match
             advance @match.size
+        elsif cur == "∞"
+            res.type = :infinity
+            res.raw = cur
+            advance
         elsif has_ahead? /[\[\]]/
             res.type = @in_range ? :range_close : :range_open
             @in_range = !@in_range

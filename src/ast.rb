@@ -44,7 +44,9 @@ def shunt(code)
                 flush(operator_stack, output_queue, initials)
 
                 if function_call
-                    output_queue << TidyToken.new(arities.pop, :call_func)
+                    arity = arities.pop
+                    arity = 0 if previous_token&.type == :paren_open
+                    output_queue << TidyToken.new(arity, :call_func)
                 else
                 end
                 operator_stack.pop
@@ -83,7 +85,7 @@ def shunt(code)
                 # pass
 
             else
-                STDERR.puts "unhandled token #{token}"
+                STDERR.puts "unhandled token #{token} in shunt"
             end
 
             if token.significant?
@@ -129,5 +131,8 @@ def ast(code)
 end
 
 if $0 == __FILE__
+    puts "]]] SHUNTING"
+    shunt(ARGV[0]) { |e| p e }
+    puts "]]] AST"
     puts ast(ARGV[0])
 end

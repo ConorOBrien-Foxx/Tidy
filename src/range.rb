@@ -12,6 +12,22 @@ module Enumerable
             n.times { yield *args }
         }
     end
+
+    def skip(n)
+        unless block_given?
+            return to_enum(__method__, n) {
+                sz = size
+                sz * n if sz
+            }
+        end
+        count = (1..n).cycle
+        each { |*args|
+            yield *args if count.next == 1
+        }
+    end
+
+    alias :* :tile
+    alias :/ :skip
 end
 
 class TidyRange
@@ -44,10 +60,6 @@ def tidy_range(*args)
     else
         range.lazy
     end
-end
-
-def out(*args)
-    p *args.map(&:force)
 end
 
 if $0 == __FILE__

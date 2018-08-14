@@ -38,6 +38,10 @@ class Tidy2Ruby < TidyTranspiler
             else
                 leaf.raw
             end
+        elsif leaf.type == :infinity
+            Infinity
+        else
+            STDERR.puts "unhandled leaf type #{leaf.type}"
         end
     end
 
@@ -48,19 +52,27 @@ class Tidy2Ruby < TidyTranspiler
                 mapped = tree.children.map { |child|
                     "#{transpile child}"
                 }
-                if RUBY_OPERATORS.include? head.raw
-                    mapped.join head.raw
-                else
-                    "(#{mapped.join "/"}).to_i"
+                case head.raw
+                    when *RUBY_OPERATORS
+                        mapped.join head.raw
+                    when "//"
+                        "(#{mapped.join "/"}).to_i"
+                    when "@"
+                        "op_get(#{mapped.join ", "})"
+                    else
+                        STDERR.puts "no such op #{head.raw.inspect}"
                 end
             elsif head.type == :unary_operator
                 mapped = tree.children.map { |child|
                     "#{transpile child}"
                 }
-                if RUBY_UNARY_OPERATORS.include? head.raw
-                    "#{head.raw}#{mapped.join}"
-                else
-                    "(#{mapped.join "/"}).to_i"
+                case head.raw
+                    when *RUBY_UNARY_OPERATORS
+                        "#{head.raw}#{mapped.join}"
+                    when "@"
+                        "op_get(#{mapped.join ", "})"
+                    else
+                        STDERR.puts "no such op #{head.raw.inspect}"
                 end
 
             elsif head.type == :assign_range
@@ -85,8 +97,7 @@ class Tidy2Ruby < TidyTranspiler
                 mapped = tree.children.map { |child|
                     "#{transpile child}"
                 }
-                "#{head.raw}(#{mapped.join ", "})"
-
+                "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
             else
                 raise "unhandled head #{head}"
             end
