@@ -46,12 +46,15 @@ end
 
 tidy_func_def(:out) { |*args|
     args.each { |arg|
-        if Enumerator === arg
-            print "["
-            print_enum arg
-            print "]"
-        else
-            print arg.inspect
+        case arg
+            when Enumerator
+                print "["
+                print_enum arg
+                print "]"
+            when File
+                print "File(#{arg.path})"
+            else
+                print arg.inspect
         end
         puts
     }
@@ -59,6 +62,12 @@ tidy_func_def(:out) { |*args|
 tidy_func_def(:write) { |*args|
     output = IO === args.first ? args.shift : STDOUT
     output.write *args.join
+}
+tidy_func_def(:open) { |file_name, *opts|
+    File.open(file_name, *opts)
+}
+tidy_func_def(:close) { |file_object|
+    file_object.close
 }
 
 tidy_curry_def(:tile) { |amount, enum|
