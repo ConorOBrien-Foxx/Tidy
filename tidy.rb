@@ -49,6 +49,9 @@ tidy_func_def(:skip) { |enum, *args|
 tidy_func_def(:take) { |enum, *args|
     enum.take(*args)
 }
+tidy_func_def(:force) { |enum|
+    enum.force
+}
 
 def op_get(source, index)
     case source
