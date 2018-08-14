@@ -56,6 +56,10 @@ tidy_func_def(:out) { |*args|
         puts
     }
 }
+tidy_func_def(:write) { |*args|
+    output = IO === args.first ? args.shift : STDOUT
+    output.write *args.join
+}
 
 tidy_curry_def(:tile) { |amount, enum|
     enum.tile(amount)

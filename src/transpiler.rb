@@ -42,6 +42,11 @@ class Tidy2Ruby < TidyTranspiler
             Infinity
         elsif leaf.type == :word
             "get_var(#{leaf.raw.inspect})"
+        elsif leaf.type == :string
+            inner = leaf.raw
+                .gsub(/""/, '"')[1..-2]
+                .gsub(/\\[nt\\]/) { eval '"' + $& + '"' }
+            "'#{inner}'"
         elsif leaf.type == :op_quote
             op = leaf.raw.match(/\((.+)\)/)[1]
             transpile(
