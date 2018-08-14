@@ -232,6 +232,9 @@ if $0 == __FILE__
         opts.on("-e", "--execute CODE", "Executes CODE in Tidy") { |v|
             options[:code] = v
         }
+        opts.on("-r", "--repl", "Engages the repl") { |v|
+            options[:repl] = v
+        }
         opts.on_tail("-h", "--help", "Show this help message") {
             puts opts
             exit
@@ -245,7 +248,12 @@ if $0 == __FILE__
         exit
     end
 
-    code = options[:code] || File.read(ARGV[0], encoding: "utf-8")
+    code = if options[:repl]
+        location = File.join(File.dirname($0), "examples/repl.tidy")
+        File.read(location)
+    else
+        options[:code] || File.read(ARGV[0], encoding: "utf-8")
+    end
     tr = Tidy2Ruby.new code
     code = tr.to_a.join("\n")
     puts code if options[:show_code]

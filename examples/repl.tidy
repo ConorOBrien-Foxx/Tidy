@@ -1,0 +1,4 @@
+force({
+    line .= readline("> ")
+    out(eval(line))
+} on N)
