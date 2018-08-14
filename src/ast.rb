@@ -164,6 +164,7 @@ def ast(code)
                 if ASTNode === stack.last
                     if stack.last.head.type == :block_split
                         params = stack.pop
+                        stack.pop
                         break
                     end
                 else
