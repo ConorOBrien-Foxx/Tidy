@@ -104,6 +104,10 @@ class Tidy2Ruby < TidyTranspiler
                         "op_from(#{mapped.join ", "})"
                     when "on"
                         "op_on(#{mapped.join ", "})"
+                    when "and"
+                        mapped.join "&&"
+                    when "or"
+                        mapped.join "||"
                     when "="
                         mapped.join "=="
                     when "/="
@@ -166,7 +170,7 @@ class Tidy2Ruby < TidyTranspiler
 
             elsif head.type == :make_block
                 params, body = tree.children
-                params = params.children.map &:raw
+                params = params.children.map &:raw rescue []
                 res = "lambda { |#{params.join ", "}|\n"
                 res += "    local_descend\n"
                 params.each { |param|

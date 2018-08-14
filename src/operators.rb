@@ -1,7 +1,9 @@
 module Operators
     PRECEDENCE_ASSOCIATIVITY = {
-        ":="        => [10, :right],
-        ".="        => [10, :right],
+        ":="        => [5, :right],
+        ".="        => [5, :right],
+        "and"       => [10, :left],
+        "or"        => [10, :left],
         "="         => [15, :left],
         "<"         => [15, :left],
         "<="        => [15, :left],
