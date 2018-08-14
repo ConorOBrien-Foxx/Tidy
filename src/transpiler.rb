@@ -171,7 +171,12 @@ class Tidy2Ruby < TidyTranspiler
             elsif head.type == :make_block
                 params, body = tree.children
                 params = params.children.map &:raw rescue []
-                res = "lambda { |#{params.join ", "}|\n"
+                args = if params.empty?
+                    "*discard"
+                else
+                    params.join(", ") + ", *discard"
+                end
+                res = "lambda { |#{args}|\n"
                 res += "    local_descend\n"
                 params.each { |param|
                     res += "    set_var_local(#{param.inspect}, #{param})\n"

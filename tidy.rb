@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 
 require_relative 'src/transpiler.rb'
+require 'readline'
 
 class TidyStopIteration < Exception
 
@@ -64,7 +65,6 @@ tidy_func_def(:out) { |*args|
     }
 }
 tidy_func_def(:readline) { |prompt, hist=true|
-    require 'readline'
     Readline.readline(prompt, hist)
 }
 tidy_func_def(:write) { |*args|
