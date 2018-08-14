@@ -22,9 +22,9 @@ Tidy operates on many data types, particularly, through transforming ranges. Let
 Suppose we want to check if a number `n` is prime. We know that `n` cannot be prime if it has any divisors. We know all divisors of `n` lie in the range `[2, n)`. Consider the following code:
 
 ```
-divisors := { x, n : n mod x = 0 } from [2, n[
-
-[2, n[.tile 2
+n := 13
+divisors := { x : n % x = 0 } from [2, n[
+out(count(divisors) = 0)
 ```
 
 Let's decompose this. `[2, n[`.

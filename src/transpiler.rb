@@ -27,7 +27,7 @@ class TidyTranspiler
 end
 
 class Tidy2Ruby < TidyTranspiler
-    RUBY_OPERATORS = ["*", "+", "/", "-"]
+    RUBY_OPERATORS = ["*", "+", "/", "-", "%"]
     RUBY_UNARY_OPERATORS = ["-"]
     def compile_leaf(leaf)
         if leaf.type == :number
@@ -95,12 +95,24 @@ class Tidy2Ruby < TidyTranspiler
                         "op_get(#{mapped.join ", "})"
                     when "&"
                         "op_bind(#{mapped.join ", "})"
+                    when "from"
+                        "op_from(#{mapped.join ", "})"
+                    when "on"
+                        "op_on(#{mapped.join ", "})"
+                    when "="
+                        mapped.join "=="
+                    when "/="
+                        mapped.join "!="
                     when ":="
                         name, val = tree.children
                         "set_var(#{name.raw.inspect}, #{transpile val})"
+                    when ".="
+                        name, val = tree.children
+                        "set_var_local(#{name.raw.inspect}, #{transpile val})"
                     else
                         STDERR.puts "no such binary op #{head.raw.inspect}"
                 end
+
             elsif head.type == :unary_operator
                 mapped = tree.children.map { |child|
                     "#{transpile child}"
@@ -149,7 +161,7 @@ class Tidy2Ruby < TidyTranspiler
                 params.each { |param|
                     res += "    set_var_local(#{param.inspect}, #{param})\n"
                 }
-                body.each_with_index { |sub_tree, i|
+                body.reverse_each.with_index { |sub_tree, i|
                     res += "    "
                     res += "result = " if i + 1 == body.size
                     res += transpile sub_tree

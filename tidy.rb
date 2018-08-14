@@ -83,14 +83,28 @@ tidy_func_def(:set_var_local) { |name, val|
     $locals.last[name] = val
 }
 tidy_func_def(:get_var) { |name|
-    if $locals.last.has_key? name
-        $locals.last[name]
+    local = $locals.reverse.find { |local| local.has_key? name }
+    if local
+        local[name]
     elsif $variables.has_key? name
         $variables[name]
     elsif $VALID_FUNCTIONS.include? name
         lambda(&method(name))
     else
         raise "undefined variable/function #{name}"
+    end
+}
+tidy_func_def(:count) { |a|
+    case a
+        when Enumerator
+            a.force.size
+        when Array, String
+            a.size
+        when Numeric
+            a.abs.to_s.size
+        else
+            STDERR.puts "invalid argument passed to #{count}"
+            raise
     end
 }
 
@@ -158,10 +172,17 @@ def op_bind(left, right)
     end
 end
 
+def op_from(pred, source)
+    source.select(&pred)
+end
+def op_on(pred, source)
+    source.map(&pred)
+end
+
 if $0 == __FILE__
     code = File.read(ARGV[0], encoding: "utf-8") rescue ARGV[0]
     tr = Tidy2Ruby.new code
     code = tr.to_a.join("\n")
-    puts code
+    # puts code
     eval code
 end

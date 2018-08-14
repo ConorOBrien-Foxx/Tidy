@@ -84,7 +84,14 @@ class TidyTokenizer
         ["b", "e", "."].include? c
     end
 
-    OPERATOR_REGEX = Regexp.new(Operators::OPERATORS.map { |e| Regexp.escape e } .join "|")
+    OPERATOR_REGEX = Regexp.new(Operators::OPERATORS.map { |e|
+        case e
+            when /^\w+$/
+                e + '\b'
+            else
+                Regexp.escape e
+        end
+    } .join "|")
     def operator?
         has_ahead? OPERATOR_REGEX
     end

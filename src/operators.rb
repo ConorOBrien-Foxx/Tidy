@@ -1,14 +1,20 @@
 module Operators
     PRECEDENCE_ASSOCIATIVITY = {
-        ":="        => [5, :right],
-        "~"         => [7, :left],
-        "-"         => [10, :left],
-        "+"         => [10, :left],
-        "*"         => [20, :left],
-        "/"         => [20, :left],
-        "//"        => [20, :left],
-        "@"         => [60, :left],
-        "&"         => [60, :left],
+        ":="        => [10, :right],
+        ".="        => [10, :right],
+        "="         => [15, :left],
+        "/="        => [15, :left],
+        "~"         => [20, :left],
+        "from"      => [20, :left],
+        "on"        => [20, :left],
+        "-"         => [40, :left],
+        "+"         => [40, :left],
+        "*"         => [60, :left],
+        "%"         => [60, :left],
+        "/"         => [60, :left],
+        "//"        => [60, :left],
+        "@"         => [80, :left],
+        "&"         => [80, :left],
     }
 
     PRECEDENCE = PRECEDENCE_ASSOCIATIVITY.map { |k, v| [k, v.last] } .to_h
