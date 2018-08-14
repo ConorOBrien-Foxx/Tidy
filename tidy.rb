@@ -55,7 +55,9 @@ tidy_func_def(:force) { |enum|
 tidy_func_def(:map) { |fn, enum|
     enum.map { |e| fn[e] }
 }
-$variables = {}
+$variables = {
+    "N" => tidy_range(1, Infinity)
+}
 $locals = [{}]
 tidy_func_def(:set_var) { |name, val|
     $variables[name] = val
