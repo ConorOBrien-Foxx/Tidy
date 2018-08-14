@@ -49,6 +49,12 @@ def tidy_curry_def(name, arity=nil, &block)
     define_method name, &curry(block, arity || block.arity)
 end
 
+def eval_tidy(code)
+    inst = Tidy2Ruby.new code
+    result = inst.to_a.join "\n"
+    eval result
+end
+
 tidy_func_def(:out) { |*args|
     args.each { |arg|
         case arg
@@ -102,7 +108,8 @@ tidy_func_def(:map) { |fn, enum|
     enum.map { |e| fn[e] }
 }
 $variables = {
-    "N" => tidy_range(1, Infinity)
+    "N" => tidy_range(1, Infinity),
+    "eval" => lambda(&method(:eval_tidy))
 }
 $locals = [{}]
 tidy_func_def(:set_var) { |name, val|
