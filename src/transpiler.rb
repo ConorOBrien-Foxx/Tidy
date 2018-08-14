@@ -172,7 +172,7 @@ class Tidy2Ruby < TidyTranspiler
                 params.each { |param|
                     res += "    set_var_local(#{param.inspect}, #{param})\n"
                 }
-                body.reverse_each.with_index { |sub_tree, i|
+                body.each_with_index { |sub_tree, i|
                     res += "    "
                     res += "result = " if i + 1 == body.size
                     res += transpile sub_tree

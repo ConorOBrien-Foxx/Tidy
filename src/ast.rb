@@ -51,6 +51,7 @@ def shunt(code)
 
             elsif token.type == :block_open
                 operator_stack << token
+                output_queue << token
                 arities << 1
 
             elsif token.type == :block_split
@@ -132,6 +133,8 @@ def ast(code)
     shunt(code) { |token|
         if token.data?
             stack << token
+        elsif token.type == :block_open
+            stack << token
         elsif token.operator?
             args = stack.pop(token.type == :unary_operator ? 1 : 2)
             stack << ASTNode.new(token, args)
@@ -145,9 +148,19 @@ def ast(code)
             stack << ASTNode.new(func, args)
         elsif token.type == :block_close
             body = []
-            until stack.last.head.type == :block_split
-                body << stack.pop
-            end
+            loop {
+                if ASTNode === stack.last
+                    if stack.last.head.type == :block_split
+                        break
+                    end
+                else
+                    if stack.last.type == :block_open
+                        stack.pop
+                        break
+                    end
+                end
+                body.unshift stack.pop
+            }
             params = stack.pop
             token.raw = ""
             token.type = :make_block
