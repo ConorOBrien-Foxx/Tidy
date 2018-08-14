@@ -1,14 +1,5 @@
 require_relative 'parser.rb'
-
-$PRECEDENCE = {
-    "+" => 5,
-    "-" => 5,
-    "*" => 10,
-    "/" => 10,
-}
-def get_precedence(operator)
-    $PRECEDENCE[operator]
-end
+require_relative 'operators.rb'
 
 def flush(source, destination, *search)
     until source.empty? || search.flatten.include?(source.last.type)
@@ -71,11 +62,11 @@ def shunt(code)
                 if previous_token.nil? || previous_token.operator?
                     token.type = :unary_operator
                 else
-                    prec = get_precedence token.raw
+                    prec = Operators::get_precedence token.raw
                     loop {
                         break if operator_stack.empty?
                         break unless operator_stack.last.operator?
-                        break if get_precedence(operator_stack.last.raw) < prec
+                        break if Operators::get_precedence(operator_stack.last.raw) < prec
                         output_queue << operator_stack.pop
                     }
                 end

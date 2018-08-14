@@ -1,3 +1,5 @@
+require_relative 'operators.rb'
+
 TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     def to_s
         "#{raw.inspect} (#{type} #{line}:#{col})"
@@ -79,8 +81,7 @@ class TidyTokenizer
         ["b", "e", "."].include? c
     end
 
-    OPERATORS = ["-", "+", "*", "/", "//", "@"].sort_by(&:size).reverse!
-    OPERATOR_REGEX = Regexp.new(OPERATORS.map { |e| Regexp.escape e } .join "|")
+    OPERATOR_REGEX = Regexp.new(Operators::OPERATORS.map { |e| Regexp.escape e } .join "|")
     def operator?
         has_ahead? OPERATOR_REGEX
     end

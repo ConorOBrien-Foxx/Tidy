@@ -2,15 +2,53 @@
 
 require_relative 'src/transpiler.rb'
 
-def out(*args)
-    p *args.map { |e|
-        if Enumerator === e
-            e.force
-        else
-            e
+def print_enum(enum, separator=", ")
+    copy = enum.to_enum
+
+    queue = []
+
+    loop {
+        break if until queue.size >= 2
+            begin
+                queue << copy.next
+            rescue StopIteration => e
+                break true
+            end
         end
+        print queue.shift, separator
     }
+    print queue.pop
+
 end
+
+$VALID_FUNCTIONS = []
+def tidy_func_def(name, &block)
+    $VALID_FUNCTIONS << name.to_s
+    define_method(name) { |*args| block[*args] }
+end
+
+tidy_func_def(:out) { |*args|
+    args.each { |arg|
+        if Enumerator === arg
+            print "["
+            print_enum arg
+            print "]"
+        else
+            print arg.inspect
+        end
+        puts
+    }
+}
+
+tidy_func_def(:tile) { |enum, *args|
+    enum.tile(*args)
+}
+tidy_func_def(:skip) { |enum, *args|
+    enum.skip(*args)
+}
+tidy_func_def(:take) { |enum, *args|
+    enum.take(*args)
+}
 
 def op_get(source, index)
     case source
@@ -20,18 +58,20 @@ def op_get(source, index)
             if index < 0
                 source.force[index]
             else
-                source.take(index + 1).force[i]
+                source.take(index + 1).force[index]
             end
         else
             raise "no such thing"
     end
 end
 
-$VALID_FUNCTIONS = ["out"]
 def call_func(fn, *args)
     case fn
         when String
-            raise unless $VALID_FUNCTIONS.include? fn
+            unless $VALID_FUNCTIONS.include? fn
+                STDERR.puts "undeclared function #{fn.inspect}"
+                exit
+            end
             send fn, *args
         when Proc
             fn[*args]
