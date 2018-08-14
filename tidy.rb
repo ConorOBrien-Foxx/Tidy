@@ -26,7 +26,7 @@ def print_enum(enum, separator=", ")
 
 end
 
-$VALID_FUNCTIONS = []
+$VALID_FUNCTIONS = ["exit"]
 def tidy_func_def(name, &block)
     $VALID_FUNCTIONS << name.to_s
     define_method(name) { |*args| block[*args] }
