@@ -210,9 +210,37 @@ def op_on(pred, source)
 end
 
 if $0 == __FILE__
-    code = File.read(ARGV[0], encoding: "utf-8") rescue ARGV[0]
+    require 'optparse'
+    FILE_NAME = File.basename $0
+    options = {}
+    opts = OptionParser.new { |opts|
+        opts.banner = "Usage: #{FILE_NAME} [options]"
+
+        opts.separator ""
+        opts.separator "[options]"
+
+        opts.on("-s", "--show-compiled", "Show the compiled code") { |v|
+            options[:show_code] = v
+        }
+        opts.on("-e", "--execute CODE", "Executes CODE in Tidy") { |v|
+            options[:code] = v
+        }
+        opts.on_tail("-h", "--help", "Show this help message") {
+            puts opts
+            exit
+        }
+    }
+
+    opts.parse!
+
+    if options.empty? && ARGV.empty?
+        puts opts
+        exit
+    end
+
+    code = options[:code] || File.read(ARGV[0], encoding: "utf-8")
     tr = Tidy2Ruby.new code
     code = tr.to_a.join("\n")
-    puts code
+    puts code if options[:show_code]
     eval code
 end
