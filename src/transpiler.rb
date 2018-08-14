@@ -40,6 +40,8 @@ class Tidy2Ruby < TidyTranspiler
             end
         elsif leaf.type == :infinity
             Infinity
+        elsif leaf.type == :word
+            "get_var(#{leaf.raw.inspect})"
         else
             STDERR.puts "unhandled leaf type #{leaf.type}"
         end
@@ -48,7 +50,14 @@ class Tidy2Ruby < TidyTranspiler
     def transpile(tree)
         if ASTNode === tree
             head = tree.head
-            if head.type == :operator
+            if ASTNode === head
+                comp = transpile(head)
+                mapped = tree.children.map { |child|
+                    "#{transpile child}"
+                }
+                "call_func(#{comp}, #{mapped.join ", "})"
+
+            elsif head.type == :operator
                 mapped = tree.children.map { |child|
                     "#{transpile child}"
                 }
@@ -59,6 +68,9 @@ class Tidy2Ruby < TidyTranspiler
                         "(#{mapped.join "/"}).to_i"
                     when "@"
                         "op_get(#{mapped.join ", "})"
+                    when ":="
+                        name, val = tree.children
+                        "set_var(#{name.raw.inspect}, #{transpile val})"
                     else
                         STDERR.puts "no such op #{head.raw.inspect}"
                 end
@@ -93,11 +105,31 @@ class Tidy2Ruby < TidyTranspiler
                     else
                         raise "no range case for #{mapped.size}"
                 end
+
             elsif head.type == :word
                 mapped = tree.children.map { |child|
                     "#{transpile child}"
                 }
                 "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
+
+            elsif head.type == :make_block
+                params, body = tree.children
+                params = params.children.map &:raw
+                res = "lambda { |#{params.join ", "}|\n"
+                res += "    local_descend\n"
+                params.each { |param|
+                    res += "    set_var_local(#{param.inspect}, #{param})\n"
+                }
+                body.each_with_index { |sub_tree, i|
+                    res += "    "
+                    res += "result = " if i + 1 == body.size
+                    res += transpile sub_tree
+                    res += "\n"
+                }
+                res += "    local_ascend\n"
+                res += "    result\n"
+                res += "}"
+
             else
                 raise "unhandled head #{head}"
             end
@@ -111,6 +143,6 @@ if $0 == __FILE__
     code = ARGV[0]
     tr = Tidy2Ruby.new code
     code = tr.to_a.join("\n")
-    p code
+    puts code
     eval code
 end

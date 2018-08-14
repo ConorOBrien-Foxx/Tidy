@@ -15,7 +15,10 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     end
 
     def data_like?
-        data? || [:paren_close, :range_close].include?(type)
+        data? || [
+            :paren_close, :range_close, :block_close,
+            :paren_open, :range_open, :block_open
+        ].include?(type)
     end
 
     def operator?
@@ -118,6 +121,18 @@ class TidyTokenizer
             advance @match.size
         elsif cur == "∞"
             res.type = :infinity
+            res.raw = cur
+            advance
+        elsif cur == "{"
+            res.type = :block_open
+            res.raw = cur
+            advance
+        elsif cur == "}"
+            res.type = :block_close
+            res.raw = cur
+            advance
+        elsif cur == ":"
+            res.type = :block_split
             res.raw = cur
             advance
         elsif has_ahead? /[\[\]]/

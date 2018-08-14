@@ -52,6 +52,42 @@ tidy_func_def(:take) { |enum, *args|
 tidy_func_def(:force) { |enum|
     enum.force
 }
+tidy_func_def(:map) { |fn, enum|
+    enum.map { |e| fn[e] }
+}
+$variables = {}
+$locals = [{}]
+tidy_func_def(:set_var) { |name, val|
+    $variables[name] = val
+}
+tidy_func_def(:set_var_local) { |name, val|
+    $locals.last[name] = val
+}
+tidy_func_def(:get_var) { |name|
+    if $locals.last.has_key? name
+        $locals.last[name]
+    elsif $variables.has_key? name
+        $variables[name]
+    end
+}
+tidy_func_def(:curry) { |fn, arity=fn.arity|
+    rec = lambda { |*args|
+        if args.size >= arity
+            fn[*args]
+        else
+            lambda { |*more|
+                rec[*args, *more]
+            }
+        end
+    }
+}
+
+def local_descend
+    $locals << {}
+end
+def local_ascend
+    $locals << {}
+end
 
 def op_get(source, index)
     case source
@@ -71,11 +107,14 @@ end
 def call_func(fn, *args)
     case fn
         when String
-            unless $VALID_FUNCTIONS.include? fn
+            if $VALID_FUNCTIONS.include? fn
+                send fn, *args
+            elsif fn = get_var(fn)
+                fn[*args]
+            else
                 STDERR.puts "undeclared function #{fn.inspect}"
                 exit
             end
-            send fn, *args
         when Proc
             fn[*args]
         else

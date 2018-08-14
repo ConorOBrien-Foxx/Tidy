@@ -8,7 +8,7 @@ def flush(source, destination, *search)
 end
 
 def shunt(code)
-    initials = [:range_open, :paren_open]
+    initials = [:range_open, :paren_open, :block_open]
     enum = Enumerator.new { |output_queue|
         operator_stack = []
         arities = []
@@ -17,9 +17,12 @@ def shunt(code)
         previous_token = nil
         tokenize(code) { |token|
             if token.data?
-                if previous_token&.data?
+                if previous_token&.data_like?
                     flush(operator_stack, output_queue, initials)
                 end
+            end
+
+            if token.data?
                 output_queue << token
 
             elsif token.type == :paren_open
@@ -32,7 +35,11 @@ def shunt(code)
 
             elsif token.type == :paren_close
                 function_call = paren_mask_stack.pop
-                flush(operator_stack, output_queue, initials)
+                # flush(operator_stack, output_queue, initials)
+                loop {
+                    break if operator_stack.last.type == :paren_open
+                    output_queue << operator_stack.pop
+                }
 
                 if function_call
                     arity = arities.pop
@@ -41,6 +48,22 @@ def shunt(code)
                 else
                 end
                 operator_stack.pop
+
+            elsif token.type == :block_open
+                operator_stack << token
+                arities << 1
+
+            elsif token.type == :block_split
+                output_queue << TidyToken.atom(arities.pop)
+                output_queue << token
+
+            elsif token.type == :block_close
+                flush(operator_stack, output_queue, initials)
+                operator_stack.pop
+                # p "block close", operator_stack
+                output_queue << token
+                # output_queue << operator_stack.pop
+
 
             elsif token.type == :range_open
                 operator_stack << token
@@ -66,7 +89,13 @@ def shunt(code)
                     loop {
                         break if operator_stack.empty?
                         break unless operator_stack.last.operator?
-                        break if Operators::get_precedence(operator_stack.last.raw) < prec
+
+                        top_raw = operator_stack.last.raw
+                        is_right = Operators::get_associativity(top_raw) == :right
+                        top_prec = Operators::get_precedence(top_raw)
+
+                        break if is_right ? top_prec <= prec : top_prec < prec
+
                         output_queue << operator_stack.pop
                     }
                 end
@@ -90,7 +119,7 @@ def shunt(code)
     }
 
     if block_given?
-        enum.each { |token| yield token }
+        enum.each { |token| yield token.dup }
     else
         enum
     end
@@ -106,7 +135,7 @@ def ast(code)
         elsif token.operator?
             args = stack.pop(token.type == :unary_operator ? 1 : 2)
             stack << ASTNode.new(token, args)
-        elsif token.type == :assign_range
+        elsif token.type == :assign_range || token.type == :block_split
             count = stack.pop.raw
             args = stack.pop(count)
             stack << ASTNode.new(token, args)
@@ -114,8 +143,17 @@ def ast(code)
             args = stack.pop(token.raw)
             func = stack.pop
             stack << ASTNode.new(func, args)
+        elsif token.type == :block_close
+            body = []
+            until stack.last.head.type == :block_split
+                body << stack.pop
+            end
+            params = stack.pop
+            token.raw = ""
+            token.type = :make_block
+            stack << ASTNode.new(token, [params, body])
         else
-            STDERR.puts "unhandled token #{token}"
+            STDERR.puts "unhandled token #{token} in ast"
         end
     }
     stack
