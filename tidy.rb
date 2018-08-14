@@ -107,6 +107,7 @@ tidy_func_def(:count) { |a|
             raise
     end
 }
+tidy_func_def(:c) { |*args| args }
 
 def local_descend
     $locals << {}
