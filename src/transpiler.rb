@@ -42,6 +42,31 @@ class Tidy2Ruby < TidyTranspiler
             Infinity
         elsif leaf.type == :word
             "get_var(#{leaf.raw.inspect})"
+        elsif leaf.type == :op_quote
+            op = leaf.raw.match(/\((.+)\)/)[1]
+            transpile(
+                ASTNode.new(
+                    TidyToken.new("", :make_block),
+                    [
+                        ASTNode.new(
+                            TidyToken.new(":", :block_split),
+                            [
+                                TidyToken.new("x", :word),
+                                TidyToken.new("y", :word),
+                            ],
+                        ),
+                        [
+                            ASTNode.new(
+                                TidyToken.new(op, :operator),
+                                [
+                                    TidyToken.new("x", :word),
+                                    TidyToken.new("y", :word),
+                                ]
+                            )
+                        ]
+                    ]
+                )
+            )
         else
             STDERR.puts "unhandled leaf type #{leaf.type}"
         end
@@ -68,11 +93,13 @@ class Tidy2Ruby < TidyTranspiler
                         "(#{mapped.join "/"}).to_i"
                     when "@"
                         "op_get(#{mapped.join ", "})"
+                    when "&"
+                        "op_bind(#{mapped.join ", "})"
                     when ":="
                         name, val = tree.children
                         "set_var(#{name.raw.inspect}, #{transpile val})"
                     else
-                        STDERR.puts "no such op #{head.raw.inspect}"
+                        STDERR.puts "no such binary op #{head.raw.inspect}"
                 end
             elsif head.type == :unary_operator
                 mapped = tree.children.map { |child|
@@ -83,8 +110,10 @@ class Tidy2Ruby < TidyTranspiler
                         "#{head.raw}#{mapped.join}"
                     when "@"
                         "op_get(#{mapped.join ", "})"
+                    when "~"
+                        "op_tilde(#{mapped.join})"
                     else
-                        STDERR.puts "no such op #{head.raw.inspect}"
+                        STDERR.puts "no such unary op #{head.raw.inspect}"
                 end
 
             elsif head.type == :assign_range

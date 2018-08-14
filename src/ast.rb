@@ -28,7 +28,7 @@ def shunt(code)
             elsif token.type == :paren_open
                 # determine if function call
                 operator_stack << token
-                paren_mask_stack << previous_token.data_like?
+                paren_mask_stack << previous_token&.data_like?
                 if paren_mask_stack.last
                     arities << 1
                 end
@@ -82,7 +82,7 @@ def shunt(code)
                 flush(operator_stack, output_queue, initials)
 
             elsif token.operator?
-                if previous_token.nil? || previous_token.operator?
+                if previous_token.nil? || previous_token.operator? || initials.include?(previous_token.type)
                     token.type = :unary_operator
                 else
                     prec = Operators::get_precedence token.raw
@@ -94,7 +94,7 @@ def shunt(code)
                         is_right = Operators::get_associativity(top_raw) == :right
                         top_prec = Operators::get_precedence(top_raw)
 
-                        break if is_right ? top_prec <= prec : top_prec < prec
+                        break unless is_right ? top_prec <= prec : top_prec < prec
 
                         output_queue << operator_stack.pop
                     }
