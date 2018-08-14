@@ -159,9 +159,11 @@ def ast(code)
             stack << ASTNode.new(func, args)
         elsif token.type == :block_close
             body = []
+            params = []
             loop {
                 if ASTNode === stack.last
                     if stack.last.head.type == :block_split
+                        params = stack.pop
                         break
                     end
                 else
@@ -172,7 +174,6 @@ def ast(code)
                 end
                 body.unshift stack.pop
             }
-            params = stack.pop
             token.raw = ""
             token.type = :make_block
             stack << ASTNode.new(token, [params, body])
