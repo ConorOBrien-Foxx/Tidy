@@ -77,7 +77,10 @@ tidy_func_def(:put) { |*args|
     }
 }
 tidy_func_def(:out) { |*args|
-    put *args
+    args.each { |arg|
+        put arg
+        print " "
+    }
     puts
 }
 tidy_func_def(:readline) { |prompt, hist=true|
