@@ -298,6 +298,8 @@ def op_caret(left, right)
 end
 
 $variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])
+$variables["odds"] = op_on(-> x { x * 2 - 1 }, $variables["N"])
+$variables["evens"] = op_on(-> x { x * 2 - 2 }, $variables["N"])
 
 if $0 == __FILE__
     require 'optparse'
