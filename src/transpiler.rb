@@ -102,6 +102,8 @@ class Tidy2Ruby < TidyTranspiler
                         "op_bind(#{mapped.join ", "})"
                     when "from"
                         "op_from(#{mapped.join ", "})"
+                    when "over"
+                        "op_over(#{mapped.join ", "})"
                     when "on"
                         "op_on(#{mapped.join ", "})"
                     when "and"

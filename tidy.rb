@@ -33,6 +33,7 @@ def tidy_func_def(name, &block)
 end
 
 tidy_func_def(:curry) { |fn, arity=fn.arity|
+    arity = ~arity if arity.negative?
     rec = lambda { |*args|
         if args.size >= arity
             fn[*args]
@@ -214,6 +215,9 @@ def op_from(pred, source)
 end
 def op_on(pred, source)
     source.map(&pred)
+end
+def op_over(qual, source)
+    source.inject(&qual)
 end
 
 if $0 == __FILE__

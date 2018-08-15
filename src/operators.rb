@@ -12,6 +12,7 @@ module Operators
         "/="        => [15, :left],
         "~"         => [20, :left],
         "from"      => [20, :left],
+        "over"      => [20, :left],
         "on"        => [20, :left],
         "-"         => [40, :left],
         "+"         => [40, :left],

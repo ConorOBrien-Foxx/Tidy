@@ -150,7 +150,7 @@ def ast(code)
                     stack.pop
                     break
                 end
-                args << stack.pop
+                args.unshift stack.pop
             }
             stack << ASTNode.new(token, args)
         elsif token.type == :call_func
