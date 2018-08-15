@@ -71,7 +71,7 @@ class Tidy2Ruby < TidyTranspiler
                 .gsub(/\\[nt\\]/) { eval '"' + $& + '"' }
             "'#{inner}'"
         elsif leaf.type == :op_quote
-            op = leaf.raw.match(/\((.+)\)/)[1]
+            op = leaf.raw.match(/\((.+)\)/)[1].strip
             begin
                 unary = transpile ASTNode.new(
                     TidyToken.new(op, :unary_operator),
