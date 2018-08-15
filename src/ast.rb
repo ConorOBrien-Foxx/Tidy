@@ -95,7 +95,7 @@ def shunt(code)
                         is_right = Operators::get_associativity(top_raw) == :right
                         top_prec = Operators::get_precedence(top_raw)
 
-                        break unless is_right ? top_prec <= prec : top_prec < prec
+                        break if is_right ? top_prec <= prec : top_prec < prec
 
                         output_queue << operator_stack.pop
                     }

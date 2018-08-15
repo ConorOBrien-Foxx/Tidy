@@ -8,8 +8,10 @@ class TidyStopIteration < Exception
 
 end
 
-def print_enum(enum, separator=", ")
+def print_enum(enum, separator=", ", &pr)
     copy = enum.to_enum
+
+    pr = lambda { |x| print x } if pr.nil?
 
     queue = []
 
@@ -21,9 +23,10 @@ def print_enum(enum, separator=", ")
                 break true
             end
         end
-        print queue.shift, separator
+        pr[queue.shift]
+        print separator
     }
-    print queue.pop
+    pr[queue.pop]
 
 end
 
@@ -57,20 +60,25 @@ def eval_tidy(code)
     eval result
 end
 
-tidy_func_def(:out) { |*args|
+tidy_func_def(:put) { |*args|
     args.each { |arg|
         case arg
             when Enumerator
                 print "["
-                print_enum arg
+                print_enum(arg) { |e|
+                    put e
+                }
                 print "]"
             when File
                 print "File(#{arg.path})"
             else
                 print arg.inspect
         end
-        puts
     }
+}
+tidy_func_def(:out) { |*args|
+    put *args
+    puts
 }
 tidy_func_def(:readline) { |prompt, hist=true|
     Readline.readline(prompt, hist)
@@ -226,6 +234,8 @@ end
 def op_over(qual, source)
     source.inject(&qual)
 end
+
+$variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])
 
 if $0 == __FILE__
     require 'optparse'
