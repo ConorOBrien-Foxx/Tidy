@@ -280,6 +280,17 @@ def op_caret(left, right)
             right.take(left)
         when istype(Enumerator, Numeric)
             left.drop(right)
+        when istype(Proc, Numeric)
+            lambda { |n, *rest|
+                unless right.positive?
+                    it = left[n, *rest]
+                    (right - 1).times {
+                        it = left[it]
+                    }
+                else
+                    n
+                end
+            }
         else
             raise "unhandled case #{left.class} and #{right.class}"
     end

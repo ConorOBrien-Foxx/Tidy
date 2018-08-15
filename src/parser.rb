@@ -17,7 +17,7 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     def data_like?
         data? || [
             :paren_close, :range_close, :block_close,
-            :paren_open, :range_open, :block_open
+            # :paren_open, :range_open, :block_open,
         ].include?(type)
     end
 
