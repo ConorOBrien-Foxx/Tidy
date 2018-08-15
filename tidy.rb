@@ -166,6 +166,11 @@ tidy_func_def(:count) { |a|
 [:sqrt, :sin, :cos, :tan].each { |k|
     tidy_func_def(k) { |arg| Math.send k, arg }
 }
+[:floor, :ceil, :round].each { |m|
+    tidy_func_def(m) { |arg, prec=nil|
+        arg.send m, *[prec].compact
+    }
+}
 tidy_func_def(:c) { |*args| args }
 
 def local_descend
