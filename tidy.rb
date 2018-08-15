@@ -87,6 +87,10 @@ tidy_func_def(:write) { |*args|
     output = IO === args.first ? args.shift : STDOUT
     output.write *args.join
 }
+tidy_func_def(:append) { |source, *vals|
+    vals.each { |val| source << val }
+    source
+}
 tidy_func_def(:open) { |file_name, *opts|
     File.open(file_name, *opts)
 }
@@ -162,6 +166,11 @@ tidy_func_def(:count) { |a|
             STDERR.puts "invalid argument passed to #{count}"
             raise
     end
+}
+tidy_func_def(:enum) { |fn|
+    Enumerator.new { |out|
+        fn[out]
+    }
 }
 [:sqrt, :sin, :cos, :tan].each { |k|
     tidy_func_def(k) { |arg| Math.send k, arg }

@@ -28,7 +28,7 @@ end
 
 class Tidy2Ruby < TidyTranspiler
     RUBY_OPERATORS = ["*", "+", "/", "-", "%", "<", ">", "<=", ">="]
-    RUBY_UNARY_OPERATORS = ["-"]
+    RUBY_UNARY_OPERATORS = ["-", "~"]
     def compile_leaf(leaf)
         if leaf.type == :number
             # TODO: expand
