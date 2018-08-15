@@ -38,6 +38,7 @@ class TidyRange
         @step = step
         @exclude_lower = exclude_lower
         @exclude_upper = exclude_upper
+        @sign = @step <=> 0
     end
 
     def valid_outer_bound?(i)
@@ -46,7 +47,7 @@ class TidyRange
 
     def each(&block)
         i = @lower
-        until i > @upper
+        until (i <=> @upper) == @sign
             block[i] if valid_outer_bound? i
             i += @step
         end

@@ -23,10 +23,10 @@ def print_enum(enum, separator=", ", &pr)
                 break true
             end
         end
-        pr[queue.shift]
+        pr[queue.shift] unless queue.empty?
         print separator
     }
-    pr[queue.pop]
+    pr[queue.pop] unless queue.empty?
 
 end
 
