@@ -301,6 +301,13 @@ $variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])
 $variables["odds"] = op_on(-> x { x * 2 - 1 }, $variables["N"])
 $variables["evens"] = op_on(-> x { x * 2 - 2 }, $variables["N"])
 
+tidy_func_def(:sum) { |arg|
+    arg.inject(0, :+)
+}
+tidy_func_def(:prod) { |arg|
+    arg.inject(0, :*)
+}
+
 if $0 == __FILE__
     require 'optparse'
     FILE_NAME = File.basename $0
