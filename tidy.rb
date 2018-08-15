@@ -257,7 +257,7 @@ def op_bind(left, right)
 end
 
 def op_from(pred, source)
-    source.select(&pred)
+    source.select { |*args| truthy pred[*args] }
 end
 def op_on(pred, source)
     source.map(&pred)
