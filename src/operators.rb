@@ -1,5 +1,9 @@
 module Operators
     PRECEDENCE_ASSOCIATIVITY = {
+        "while"     => [3, :left],
+        "until"     => [3, :left],
+        "unless"    => [4, :left],
+        "if"        => [4, :left],
         ":="        => [5, :right],
         ".="        => [5, :right],
         "and"       => [10, :left],
@@ -25,8 +29,8 @@ module Operators
         "&"         => [80, :left],
     }
 
-    PRECEDENCE = PRECEDENCE_ASSOCIATIVITY.map { |k, v| [k, v.last] } .to_h
-    ASSOCIATIVITY = PRECEDENCE_ASSOCIATIVITY.map { |k, v| [k, v.first] } .to_h
+    PRECEDENCE = PRECEDENCE_ASSOCIATIVITY.map { |k, v| [k, v.first] } .to_h
+    ASSOCIATIVITY = PRECEDENCE_ASSOCIATIVITY.map { |k, v| [k, v.last] } .to_h
     OPERATORS = PRECEDENCE.keys.sort_by(&:size).reverse!
 
     def self.get_precedence(op)

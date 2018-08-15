@@ -127,6 +127,9 @@ class Tidy2Ruby < TidyTranspiler
                         "op_on(#{mapped.join ", "})"
                     when "^"
                         "op_caret(#{mapped.join ", "})"
+                    when "if", "unless", "while", "until"
+                        expr, cond = mapped
+                        "#{expr} #{head.raw} truthy(#{cond})"
                     when "and"
                         mapped.join "&&"
                     when "or"
