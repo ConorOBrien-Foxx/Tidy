@@ -32,12 +32,24 @@ class Tidy2Ruby < TidyTranspiler
     def compile_leaf(leaf)
         if leaf.type == :number
             # TODO: expand
-            if leaf.raw.index "."
-                rational = leaf.raw.to_r
+            # parse suffixes
+            raw = leaf.raw
+            terminator = nil
+            if TidyTokenizer.number_terminator? raw[-1]
+                raw, terminator = raw[0..-2], raw[-1]
+            end
+            res = if raw.index "."
+                rational = raw.to_r
                 "(#{rational.numerator}r/#{rational.denominator})"
             else
-                leaf.raw
+                raw
             end
+            if terminator == "f"
+                res = "#{res}.to_f"
+            elsif !terminator.nil?
+                raise "unhandled terminator #{terminator}"
+            end
+            res
         elsif leaf.type == :infinity
             Infinity
         elsif leaf.type == :word

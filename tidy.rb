@@ -126,6 +126,7 @@ tidy_func_def(:prime) { |n|
 $variables = {
     "N" => tidy_range(1, Infinity),
     "eval" => lambda(&method(:eval_tidy)),
+    "range" => curry(lambda(&method(:tidy_range)), 2),
     "true" => true,
     "false" => false,
     "nil" => nil,
@@ -161,6 +162,9 @@ tidy_func_def(:count) { |a|
             STDERR.puts "invalid argument passed to #{count}"
             raise
     end
+}
+[:sqrt, :sin, :cos, :tan].each { |k|
+    tidy_func_def(k) { |arg| Math.send k, arg }
 }
 tidy_func_def(:c) { |*args| args }
 
