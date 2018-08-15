@@ -282,11 +282,12 @@ def op_caret(left, right)
             left.drop(right)
         when istype(Proc, Numeric)
             lambda { |n, *rest|
-                unless right.positive?
+                if right.positive?
                     it = left[n, *rest]
                     (right - 1).times {
                         it = left[it]
                     }
+                    it
                 else
                     n
                 end
