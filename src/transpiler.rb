@@ -51,6 +51,8 @@ class Tidy2Ruby < TidyTranspiler
                     res = "#{res}.to_f"
                 when "r"
                     res += "r" unless rational
+                when "i"
+                    res = "(#{res}*1i)"
                 else
                     raise "unhandled terminator #{terminator}"
             end
