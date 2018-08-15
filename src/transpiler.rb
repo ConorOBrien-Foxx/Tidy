@@ -44,10 +44,15 @@ class Tidy2Ruby < TidyTranspiler
             else
                 raw
             end
-            if terminator == "f"
-                res = "#{res}.to_f"
-            elsif !terminator.nil?
-                raise "unhandled terminator #{terminator}"
+            case terminator
+                when nil
+                    #pass
+                when "f"
+                    res = "#{res}.to_f"
+                when "r"
+                    res += "r" unless rational
+                else
+                    raise "unhandled terminator #{terminator}"
             end
             res
         elsif leaf.type == :infinity
