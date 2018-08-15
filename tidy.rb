@@ -189,7 +189,7 @@ def local_ascend
     $locals << {}
 end
 
-def op_get(source, index)
+define_method(:op_get, &curry(lambda { |source, index|
     case source
         when Array, String
             source[index]
@@ -202,7 +202,7 @@ def op_get(source, index)
         else
             raise "no such thing"
     end
-end
+}))
 
 def call_func(fn, *args)
     case fn
@@ -254,6 +254,25 @@ def op_on(pred, source)
 end
 def op_over(qual, source)
     source.inject(&qual)
+end
+
+def istype(*types)
+    lambda { |arr|
+        arr.zip(types).map { |el, type| type === el } .all?
+    }
+end
+
+def op_caret(left, right)
+    case [left, right]
+        when istype(Numeric, Numeric)
+            left ** right
+        when istype(Numeric, Enumerator)
+            right.take(left)
+        when istype(Enumerator, Numeric)
+            left.drop(right)
+        else
+            raise "unhandled case #{left.class} and #{right.class}"
+    end
 end
 
 $variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])

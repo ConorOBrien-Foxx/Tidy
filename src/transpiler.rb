@@ -125,6 +125,8 @@ class Tidy2Ruby < TidyTranspiler
                         "op_over(#{mapped.join ", "})"
                     when "on"
                         "op_on(#{mapped.join ", "})"
+                    when "^"
+                        "op_caret(#{mapped.join ", "})"
                     when "and"
                         mapped.join "&&"
                     when "or"

@@ -20,6 +20,7 @@ module Operators
         "%"         => [60, :left],
         "/"         => [60, :left],
         "//"        => [60, :left],
+        "^"         => [70, :right],
         "@"         => [80, :left],
         "&"         => [80, :left],
     }
