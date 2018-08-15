@@ -26,6 +26,10 @@ class TidyTranspiler
     end
 end
 
+class NoOperatorException < Exception
+    #TODO: description
+end
+
 class Tidy2Ruby < TidyTranspiler
     RUBY_OPERATORS = ["*", "+", "/", "-", "%", "<", ">", "<=", ">="]
     RUBY_UNARY_OPERATORS = ["-", "~"]
@@ -68,29 +72,52 @@ class Tidy2Ruby < TidyTranspiler
             "'#{inner}'"
         elsif leaf.type == :op_quote
             op = leaf.raw.match(/\((.+)\)/)[1]
-            transpile(
-                ASTNode.new(
-                    TidyToken.new("", :make_block),
+            begin
+                unary = transpile ASTNode.new(
+                    TidyToken.new(op, :unary_operator),
                     [
-                        ASTNode.new(
-                            TidyToken.new(":", :block_split),
-                            [
-                                TidyToken.new("x", :word),
-                                TidyToken.new("y", :word),
-                            ],
-                        ),
-                        [
-                            ASTNode.new(
-                                TidyToken.new(op, :operator),
-                                [
-                                    TidyToken.new("x", :word),
-                                    TidyToken.new("y", :word),
-                                ]
-                            )
-                        ]
+                        TidyToken.new("x", :word)
                     ]
                 )
-            )
+            rescue NoOperatorException
+                unary = nil
+            end
+
+            begin
+                binary = transpile ASTNode.new(
+                    TidyToken.new(op, :operator),
+                    [
+                        TidyToken.new("x", :word),
+                        TidyToken.new("y", :word),
+                    ]
+                )
+            rescue NoOperatorException
+                binary = nil
+            end
+            if unary && binary
+                "lambda { |x, y=:unpassed|
+                    set_var_local(\"x\", x)
+                    if y == :unpassed
+                        #{unary}
+                    else
+                        set_var_local(\"y\", y)
+                        #{binary}
+                    end
+                }"
+            elsif unary
+                "lambda { |x|
+                    set_var_local(\"x\", x)
+                    #{unary}
+                }"
+            elsif binary
+                "lambda { |x, y|
+                    set_var_local(\"x\", x)
+                    set_var_local(\"y\", y)
+                    #{binary}
+                }"
+            else
+                raise "operator #{op} does not exist"
+            end
         else
             STDERR.puts "unhandled leaf type #{leaf.type}"
         end
@@ -145,8 +172,15 @@ class Tidy2Ruby < TidyTranspiler
                         name, val = tree.children
                         "set_var_local(#{name.raw.inspect}, #{transpile val})"
                     else
-                        STDERR.puts "no such binary op #{head.raw.inspect}"
+                        raise NoOperatorException.new("no such binary op #{head.raw.inspect}")
                 end
+
+            elsif head.type == :op_quote
+                mapped = tree.children.map { |child|
+                    "#{transpile child}"
+                }
+                fn = compile_leaf head
+                "#{fn}[#{mapped.join ", "}]"
 
             elsif head.type == :unary_operator
                 mapped = tree.children.map { |child|
@@ -160,7 +194,7 @@ class Tidy2Ruby < TidyTranspiler
                     when "~"
                         "op_tilde(#{mapped.join})"
                     else
-                        STDERR.puts "no such unary op #{head.raw.inspect}"
+                        raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
                 end
 
             elsif head.type == :assign_range
