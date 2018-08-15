@@ -2,6 +2,7 @@
 
 require_relative 'src/transpiler.rb'
 require 'readline'
+require 'prime'
 
 class TidyStopIteration < Exception
 
@@ -108,9 +109,15 @@ tidy_func_def(:force) { |enum|
 tidy_func_def(:map) { |fn, enum|
     enum.map { |e| fn[e] }
 }
+tidy_func_def(:prime) { |n|
+    Prime.prime? n
+}
 $variables = {
     "N" => tidy_range(1, Infinity),
-    "eval" => lambda(&method(:eval_tidy))
+    "eval" => lambda(&method(:eval_tidy)),
+    "true" => true,
+    "false" => false,
+    "nil" => nil,
 }
 $locals = [{}]
 tidy_func_def(:set_var) { |name, val|
