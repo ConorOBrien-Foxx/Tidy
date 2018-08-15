@@ -90,6 +90,10 @@ tidy_func_def(:write) { |*args|
     output = IO === args.first ? args.shift : STDOUT
     output.write *args.join
 }
+tidy_func_def(:writeln) { |*args|
+    output = IO === args.first ? args.shift : STDOUT
+    output.write *args.join, "\n"
+}
 tidy_func_def(:append) { |source, *vals|
     vals.each { |val| source << val }
     source
