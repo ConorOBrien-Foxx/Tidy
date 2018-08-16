@@ -30,8 +30,23 @@ module Enumerable
     alias :/ :skip
 end
 
+# https://stackoverflow.com/a/16052401/4119004
+module LazyEnumerable
+  include Enumerable
+
+  def self.make_lazy(*methods)
+    methods.each do |method|
+      define_method method do |*args, &block|
+        lazy.public_send(method, *args, &block)
+      end
+    end
+  end
+
+  make_lazy *(Enumerable.public_instance_methods - [:lazy])
+end
+
 class TidyRange
-    include Enumerable
+    include LazyEnumerable
     def initialize(lower, upper, step = 1, exclude_lower = false, exclude_upper = false)
         @lower = lower
         @upper = upper
@@ -52,6 +67,15 @@ class TidyRange
             i += @step
         end
     end
+
+    def include?(n)
+        [
+            (n - @lower) % @step == 0,
+            n >= @lower,
+            n <= @upper,
+            valid_outer_bound?(n)
+        ].all?
+    end
 end
 
 def tidy_range(*args)
@@ -59,7 +83,7 @@ def tidy_range(*args)
     if block_given?
         range.map { |args| yield *args }
     else
-        range.lazy
+        range
     end
 end
 

@@ -8,6 +8,21 @@ class TidyStopIteration < Exception
 
 end
 
+def to_base(b, n)
+    return [n] if n <= 1
+
+    arr = []
+    until n.zero?
+        n, m = n.divmod b
+        arr.unshift m
+    end
+    arr
+end
+
+def from_base(b, a)
+    a.map.with_index { |e, i| e * b**(a.size - i - 1) }.sum
+end
+
 def print_enum(enum, separator=", ", &pr)
     copy = enum.to_enum
 
@@ -139,6 +154,7 @@ tidy_func_def(:prime) { |n|
 }
 $variables = {
     "N" => tidy_range(1, Infinity),
+    "W" => tidy_range(0, Infinity),
     "eval" => lambda(&method(:eval_tidy)),
     "range" => curry(lambda(&method(:tidy_range)), 2),
     "true" => true,
@@ -164,17 +180,26 @@ tidy_func_def(:get_var) { |name|
         raise "undefined variable/function #{name}"
     end
 }
-tidy_func_def(:count) { |a|
-    case a
-        when Enumerator
-            a.force.size
-        when Array, String
-            a.size
-        when Numeric
-            a.abs.to_s.size
-        else
-            STDERR.puts "invalid argument passed to #{count}"
-            raise
+tidy_func_def(:count) { |a, e=:not_passed|
+    if e == :not_passed
+        case a
+            when Enumerator
+                a.force.size
+            when Array, String
+                a.size
+            when Numeric
+                a.abs.to_s.size
+            else
+                STDERR.puts "invalid argument passed to #{count}"
+                raise
+        end
+    else
+        case e
+            when Proc
+                a.count(&e)
+            else
+                a.count(e)
+        end
     end
 }
 tidy_func_def(:enum) { |fn|
@@ -210,7 +235,9 @@ define_method(:op_get, &curry(lambda { |source, index|
                 source.take(index + 1).force[index]
             end
         else
-            raise "no such thing"
+            lambda { |*args|
+                source[index[*args]]
+            }
     end
 }))
 
@@ -304,18 +331,7 @@ def op_caret(left, right)
             raise "unhandled case #{left.class} and #{right.class}"
     end
 end
-
-$variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])
-$variables["odds"] = op_on(-> x { x * 2 - 1 }, $variables["N"])
-$variables["evens"] = op_on(-> x { x * 2 - 2 }, $variables["N"])
-
-tidy_func_def(:sum) { |arg|
-    arg.inject(0, :+)
-}
-tidy_func_def(:prod) { |arg|
-    arg.inject(0, :*)
-}
-tidy_func_def(:op_pipeline) { |a, b|
+def op_pipeline(a, b)
     case [a, b]
         when istype(__, Proc)
             b[a]
@@ -324,6 +340,32 @@ tidy_func_def(:op_pipeline) { |a, b|
         else
             raise "invalid arguments for `|`: #{a} and #{fn}"
     end
+end
+def op_in(a, b)
+    b.include? a
+end
+
+$variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])
+$variables["odds"] = tidy_range(1, Infinity, 2)
+$variables["evens"] = tidy_range(0, Infinity, 2)
+
+tidy_func_def(:sum) { |arg|
+    arg.inject(0, :+)
+}
+tidy_func_def(:prod) { |arg|
+    arg.inject(0, :*)
+}
+tidy_curry_def(:base) { |base, n|
+    to_base(base, n)
+}
+tidy_curry_def(:unbase) { |base, n|
+    from_base(base, n)
+}
+tidy_func_def(:bin) { |n|
+    to_base(2, n)
+}
+tidy_func_def(:unbin) { |n|
+    from_base(2, n)
 }
 
 if $0 == __FILE__

@@ -167,6 +167,8 @@ class Tidy2Ruby < TidyTranspiler
                         mapped.join "!="
                     when "|"
                         "op_pipeline(#{mapped.join ", "})"
+                    when "in"
+                        "op_in(#{mapped.join ", "})"
                     when ":="
                         name, val = tree.children
                         "set_var(#{name.raw.inspect}, #{transpile val})"

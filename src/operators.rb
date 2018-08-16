@@ -9,6 +9,7 @@ module Operators
         ".="        => [5, :right],
         "and"       => [10, :left],
         "or"        => [10, :left],
+        "in"        => [15, :left],
         "="         => [15, :left],
         "<"         => [15, :left],
         "<="        => [15, :left],
