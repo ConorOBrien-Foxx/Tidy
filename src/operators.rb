@@ -1,5 +1,6 @@
 module Operators
     PRECEDENCE_ASSOCIATIVITY = {
+        "|"         => [1, :left],
         "while"     => [3, :left],
         "until"     => [3, :left],
         "unless"    => [4, :left],

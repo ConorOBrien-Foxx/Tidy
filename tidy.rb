@@ -266,9 +266,17 @@ def op_over(qual, source)
     source.inject(&qual)
 end
 
+def __
+    Proc.new { true }
+end
+
 def istype(*types)
     lambda { |arr|
-        arr.zip(types).map { |el, type| type === el } .all?
+        if Array === arr
+            arr.zip(types).map { |el, type| type === el } .all?
+        else
+            types.size == 1 && types[0] === arr
+        end
     }
 end
 
@@ -306,6 +314,16 @@ tidy_func_def(:sum) { |arg|
 }
 tidy_func_def(:prod) { |arg|
     arg.inject(0, :*)
+}
+tidy_func_def(:op_pipeline) { |a, b|
+    case [a, b]
+        when istype(__, Proc)
+            b[a]
+        when istype(Numeric, Numeric)
+            b % a == 0
+        else
+            raise "invalid arguments for `|`: #{a} and #{fn}"
+    end
 }
 
 if $0 == __FILE__
