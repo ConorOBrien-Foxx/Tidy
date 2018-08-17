@@ -233,6 +233,9 @@ def op_slashslash(a, b)
             chunk a, b
     end
 end
+def op_dot(a, b)
+    raise "no such behaviour"
+end
 
 tidy_curry_def(:chunk) { |a, b|
     a, b = a.to_enum, b.to_enum

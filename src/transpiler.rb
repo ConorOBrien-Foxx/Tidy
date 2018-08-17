@@ -169,6 +169,8 @@ class Tidy2Ruby < TidyTranspiler
                         "op_pipeline(#{mapped.join ", "})"
                     when "in"
                         "op_in(#{mapped.join ", "})"
+                    when "."
+                        "op_dot(#{mapped.join ", "})"
                     when ":="
                         name, val = tree.children
                         "set_var(#{name.raw.inspect}, #{transpile val})"
@@ -197,6 +199,8 @@ class Tidy2Ruby < TidyTranspiler
                         "op_get(#{mapped.join ", "})"
                     when "~"
                         "op_tilde(#{mapped.join})"
+                    when "."
+                        "call_func(#{mapped.join ", "})"
                     else
                         raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
                 end

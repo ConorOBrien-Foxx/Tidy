@@ -29,6 +29,7 @@ module Operators
         "^"         => [70, :right],
         "@"         => [80, :left],
         "&"         => [80, :left],
+        "."         => [100, :left],
     }
 
     PRECEDENCE = PRECEDENCE_ASSOCIATIVITY.map { |k, v| [k, v.first] } .to_h
