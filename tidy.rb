@@ -78,7 +78,7 @@ end
 tidy_func_def(:put) { |*args|
     args.each { |arg|
         case arg
-            when Enumerator
+            when Enumerator, LazyEnumerator
                 print "["
                 print_enum(arg) { |e|
                     put e
@@ -160,6 +160,7 @@ $variables = {
     "true" => true,
     "false" => false,
     "nil" => nil,
+    "inf" => Infinity,
 }
 $locals = [{}]
 tidy_func_def(:set_var) { |name, val|
@@ -246,6 +247,8 @@ def call_func(fn, *args)
         when String
             if $VALID_FUNCTIONS.include? fn
                 send fn, *args
+            elsif fn == "inf"
+                tidy_range(args.first, Infinity)
             elsif fn = get_var(fn)
                 fn[*args]
             else
@@ -366,6 +369,11 @@ tidy_func_def(:bin) { |n|
 }
 tidy_func_def(:unbin) { |n|
     from_base(2, n)
+}
+tidy_func_def(:even) { |n| n.even? }
+tidy_func_def(:odd) { |n| n.odd? }
+tidy_func_def(:splice) { |*seqs|
+    SplicedSequence.new(*seqs)
 }
 
 if $0 == __FILE__

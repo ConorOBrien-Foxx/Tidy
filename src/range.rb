@@ -45,8 +45,11 @@ module LazyEnumerable
   make_lazy *(Enumerable.public_instance_methods - [:lazy])
 end
 
-class TidyRange
+class LazyEnumerator < Enumerator
     include LazyEnumerable
+end
+
+class TidyRange < LazyEnumerator
     def initialize(lower, upper, step = 1, exclude_lower = false, exclude_upper = false)
         @lower = lower
         @upper = upper
@@ -80,6 +83,36 @@ end
 
 def tidy_range(*args)
     range = TidyRange.new(*args)
+    if block_given?
+        range.map { |args| yield *args }
+    else
+        range
+    end
+end
+
+class SplicedSequence < LazyEnumerator
+    def initialize(*sequences, fill: :none)
+        @sequences = sequences
+        @fill = fill
+    end
+
+    def each(&block)
+        copies = @sequences.map(&:to_enum)
+        until copies.empty?
+            copies.keep_if { |seq|
+                begin
+                    block[seq.next]
+                    true
+                rescue StopIteration
+                    false
+                end
+            }
+        end
+    end
+end
+
+def spliced_sequence(*args)
+    range = SplicedSequence.new(*args)
     if block_given?
         range.map { |args| yield *args }
     else
