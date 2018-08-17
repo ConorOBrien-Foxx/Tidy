@@ -42,6 +42,10 @@ module LazyEnumerable
     end
   end
 
+  def force
+      to_a
+  end
+
   make_lazy *(Enumerable.public_instance_methods - [:lazy])
 end
 

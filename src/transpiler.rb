@@ -141,7 +141,7 @@ class Tidy2Ruby < TidyTranspiler
                     when *RUBY_OPERATORS
                         mapped.join head.raw
                     when "//"
-                        "(#{mapped.join "/"}).to_i"
+                        "op_slashslash(#{mapped.join ", "})"
                     when "@"
                         "op_get(#{mapped.join ", "})"
                     when "&"

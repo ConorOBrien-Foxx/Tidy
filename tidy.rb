@@ -204,7 +204,7 @@ tidy_func_def(:count) { |a, e=:not_passed|
     end
 }
 tidy_func_def(:enum) { |fn|
-    Enumerator.new { |out|
+    LazyEnumerator.new { |out|
         fn[out]
     }
 }
@@ -223,6 +223,15 @@ def local_descend
 end
 def local_ascend
     $locals << {}
+end
+
+def op_slashslash(a, b)
+    case [a, b]
+        when istype(Numeric, Numeric)
+            (a / b).to_i
+        when istype(Enumerable, Enumerable)
+
+    end
 end
 
 define_method(:op_get, &curry(lambda { |source, index|
