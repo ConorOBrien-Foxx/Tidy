@@ -392,7 +392,7 @@ tidy_func_def(:sum) { |arg|
     arg.inject(0, :+)
 }
 tidy_func_def(:prod) { |arg|
-    arg.inject(0, :*)
+    arg.inject(1, :*)
 }
 tidy_curry_def(:base) { |base, n|
     to_base(base, n)
