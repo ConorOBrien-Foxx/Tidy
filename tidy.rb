@@ -230,9 +230,33 @@ def op_slashslash(a, b)
         when istype(Numeric, Numeric)
             (a / b).to_i
         when istype(Enumerable, Enumerable)
-
+            chunk a, b
     end
 end
+
+tidy_curry_def(:chunk) { |a, b|
+    a, b = a.to_enum, b.to_enum
+    LazyEnumerator.new { |out|
+        loop {
+            begin
+                slice_count = a.next
+            rescue StopIteration
+                break
+            end
+
+            build = []
+            begin
+                slice_count.times {
+                    build << b.next
+                }
+            rescue
+                out << build
+                break
+            end
+            out << build
+        }
+    }
+}
 
 define_method(:op_get, &curry(lambda { |source, index|
     case source
