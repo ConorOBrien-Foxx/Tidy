@@ -23,6 +23,15 @@ def from_base(b, a)
     a.map.with_index { |e, i| e * b**(a.size - i - 1) }.sum
 end
 
+$variables = {
+    "N" => tidy_range(1, Infinity),
+    "W" => tidy_range(0, Infinity),
+    "true" => true,
+    "false" => false,
+    "nil" => nil,
+    "inf" => Infinity,
+}
+
 def print_enum(enum, separator=", ", max: Infinity, &pr)
     copy = enum.to_enum
 
@@ -53,9 +62,13 @@ def print_enum(enum, separator=", ", max: Infinity, &pr)
 end
 
 $VALID_FUNCTIONS = ["exit"]
-def tidy_func_def(name, &block)
-    $VALID_FUNCTIONS << name.to_s
-    define_method(name) { |*args| block[*args] }
+def tidy_func_def(name, global: true, &block)
+    if global
+        $VALID_FUNCTIONS << name.to_s
+        define_method(name) { |*args| block[*args] }
+    else
+        $variables[name.to_s] = block
+    end
 end
 
 tidy_func_def(:curry) { |fn, arity=fn.arity|
@@ -71,6 +84,8 @@ tidy_func_def(:curry) { |fn, arity=fn.arity|
     }
 }
 
+$variables["range"] = curry(lambda(&method(:tidy_range)), 2)
+
 def tidy_curry_def(name, arity=nil, &block)
     $VALID_FUNCTIONS << name.to_s
     define_method name, &curry(block, arity || block.arity)
@@ -81,6 +96,7 @@ def eval_tidy(code)
     result = inst.to_a.join "\n"
     eval result
 end
+$variables["eval"] = lambda(&method(:eval_tidy))
 
 tidy_func_def(:show) { |enum, max=Infinity|
     print "["
@@ -105,7 +121,7 @@ tidy_func_def(:recur2) { |*seeds, fn|
     recursive_enum seeds, fn, slice: 2
 }
 tidy_curry_def(:slices) { |count, enum|
-
+    enum.each_cons(count)
 }
 
 tidy_func_def(:put) { |*args|
@@ -180,16 +196,6 @@ tidy_func_def(:map) { |fn, enum|
 }
 tidy_func_def(:prime) { |n|
     Prime.prime? n
-}
-$variables = {
-    "N" => tidy_range(1, Infinity),
-    "W" => tidy_range(0, Infinity),
-    "eval" => lambda(&method(:eval_tidy)),
-    "range" => curry(lambda(&method(:tidy_range)), 2),
-    "true" => true,
-    "false" => false,
-    "nil" => nil,
-    "inf" => Infinity,
 }
 $locals = [{}]
 tidy_func_def(:set_var) { |name, val|
