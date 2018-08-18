@@ -171,6 +171,9 @@ tidy_func_def(:append) { |source, *vals|
 tidy_func_def(:open) { |file_name, *opts|
     File.open(file_name, *opts)
 }
+tidy_func_def(:close) { |file_object|
+    file_object.close
+}
 tidy_func_def(:gets) { |object=STDIN|
     object.gets
 }
