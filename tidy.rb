@@ -271,7 +271,7 @@ tidy_func_def(:first, global: false) { |coll, n=:not_passed|
     if n == :not_passed
         coll.first
     else
-        coll.first n
+        n.first coll
     end
 }
 tidy_func_def(:last, global: false) { |coll, n=:not_passed|
