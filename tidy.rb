@@ -231,7 +231,7 @@ tidy_func_def(:get_var) { |name|
         raise "undefined variable/function #{name}"
     end
 }
-tidy_func_def(:count) { |a, e=:not_passed|
+tidy_func_def(:count, global: false) { |a, e=:not_passed|
     if e == :not_passed
         case a
             when enum_like
