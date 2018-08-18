@@ -7,7 +7,10 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     alias :inspect :to_s
 
     def data?
-        [:number, :atom, :word, :infinity, :op_quote, :string].include? type
+        [
+            :number, :atom, :word, :infinity,
+            :op_quote, :string, :character
+        ].include? type
     end
 
     def blank?
@@ -153,6 +156,12 @@ class TidyTokenizer
         elsif cur == ";"
             res.type = :separator
             res.raw = cur
+            advance
+        elsif cur == "'"
+            res.type = :character
+            res.raw = cur
+            advance
+            res.raw += cur
             advance
         elsif cur == "∞"
             res.type = :infinity

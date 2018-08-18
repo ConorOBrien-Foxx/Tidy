@@ -61,6 +61,8 @@ class Tidy2Ruby < TidyTranspiler
                     raise "unhandled terminator #{terminator}"
             end
             res
+        elsif leaf.type == :character
+            "Character.new(#{leaf.raw[1].ord})"
         elsif leaf.type == :infinity
             Infinity
         elsif leaf.type == :word
