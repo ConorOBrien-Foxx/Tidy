@@ -509,6 +509,12 @@ if $0 == __FILE__
         opts.on("-r", "--repl", "Engages the repl") { |v|
             options[:repl] = v
         }
+        opts.on("-t", "--tokenize", "Tokenizes the program") { |v|
+            options[:tokenize] = v
+        }
+        opts.on("-a", "--ast", "Shunts and generates the AST for the program") { |v|
+            options[:ast] = v
+        }
         opts.on_tail("-h", "--help", "Show this help message") {
             puts opts
             exit
@@ -527,6 +533,19 @@ if $0 == __FILE__
         File.read(location)
     else
         options[:code] || File.read(ARGV[0], encoding: "utf-8")
+    end
+
+    if options[:tokenize]
+        TidyTokenizer.new(code).each { |token|
+            p token
+        }
+        exit
+    elsif options[:ast]
+        puts "]]] SHUNTING"
+        shunt(code) { |e| p e }
+        puts "]]] AST"
+        puts ast(code)
+        exit
     end
     tr = Tidy2Ruby.new code
     code = tr.to_a.join("\n")
