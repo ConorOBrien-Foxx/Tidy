@@ -150,6 +150,10 @@ class TidyTokenizer
             res.type = :operator
             res.raw = @match
             advance @match.size
+        elsif cur == ";"
+            res.type = :separator
+            res.raw = cur
+            advance
         elsif cur == "∞"
             res.type = :infinity
             res.raw = cur

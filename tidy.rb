@@ -67,7 +67,9 @@ def tidy_func_def(name, global: true, &block)
         $VALID_FUNCTIONS << name.to_s
         define_method(name) { |*args| block[*args] }
     else
-        $variables[name.to_s] = block
+        $variables[name.to_s] = lambda { |*args|
+            block[args]
+        }
     end
 end
 
@@ -123,6 +125,7 @@ tidy_func_def(:recur2) { |*seeds, fn|
 tidy_curry_def(:slices) { |count, enum|
     enum.each_cons(count)
 }
+tidy_func_def(:sgn) { |a| a <=> 0 }
 
 tidy_func_def(:put) { |*args|
     args.each { |arg|
@@ -191,7 +194,7 @@ tidy_func_def(:force) { |enum|
     end
     result
 }
-tidy_func_def(:map) { |fn, enum|
+tidy_curry_def(:map) { |fn, enum|
     enum.map { |e| fn[e] }
 }
 tidy_func_def(:prime) { |n|
@@ -264,11 +267,18 @@ tidy_func_def(:enum) { |fn|
     }
 }
 tidy_func_def(:c) { |*args| args }
-tidy_func_def(:first) { |coll, n=:not_passed|
+tidy_func_def(:first, global: false) { |coll, n=:not_passed|
     if n == :not_passed
         coll.first
     else
         coll.first n
+    end
+}
+tidy_func_def(:last, global: false) { |coll, n=:not_passed|
+    if n == :not_passed
+        coll.last
+    else
+        coll.last n
     end
 }
 
@@ -332,6 +342,11 @@ define_method(:op_get, &curry(lambda { |source, index|
     end
 }))
 
+tidy_func_def(:same) { |*args|
+    args = args.flatten
+    args.all? { |e| e == args.first }
+}
+
 def call_func(fn, *args)
     case fn
         when String
@@ -380,7 +395,9 @@ def op_from(pred, source)
     source.select { |*args| truthy pred[*args] }
 end
 def op_on(pred, source)
-    source.map(&pred)
+    source.map { |e|
+        pred[e]
+    }
 end
 def op_over(qual, source)
     source.inject(&qual)

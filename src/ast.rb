@@ -82,6 +82,9 @@ def shunt(code)
                 arities[-1] += 1
                 flush(operator_stack, output_queue, initials)
 
+            elsif token.type == :separator
+                flush(operator_stack, output_queue, initials)
+
             elsif token.operator?
                 if previous_token.nil? || !previous_token.data_like?
                     token.type = :unary_operator
