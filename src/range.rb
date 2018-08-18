@@ -51,6 +51,14 @@ end
 
 class LazyEnumerator
     include LazyEnumerable
+
+    def initialize(&block)
+        @enum = Enumerator.new(&block)
+    end
+
+    def each(&block)
+        @enum.each(&block)
+    end
 end
 
 def enum_like
