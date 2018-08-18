@@ -1,5 +1,31 @@
 Infinity = Float::INFINITY
 
+class Character
+    def initialize(val)
+        @val = val.ord
+    end
+
+    def chr
+        @val.chr
+    end
+
+    def to_i
+        @val
+    end
+
+    alias :ord :to_i
+
+    def inspect
+        "'#{chr}"
+    end
+
+    [:+, :-, :/, :*].each { |k|
+        define_method(k) { |n|
+            Character.new @val.send k, n.to_i
+        }
+    }
+end
+
 module Enumerable
     def tile(n)
         unless block_given?
