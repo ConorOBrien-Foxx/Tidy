@@ -49,8 +49,14 @@ module LazyEnumerable
   make_lazy *(Enumerable.public_instance_methods - [:lazy])
 end
 
-class LazyEnumerator < Enumerator
+class LazyEnumerator
     include LazyEnumerable
+end
+
+def enum_like
+    lambda { |x|
+        Enumerator === x || LazyEnumerator === x
+    }
 end
 
 class TidyRange < LazyEnumerator
@@ -122,6 +128,26 @@ def spliced_sequence(*args)
     else
         range
     end
+end
+
+def recursive_enum(seeds, fn, slice: 1)
+    seeds = seeds.to_enum
+    LazyEnumerator.new { |out|
+        cache = []
+        seeds.each { |seed|
+            cache << seed
+            if cache.size > slice
+                cache.shift
+            end
+            out << seed
+        }
+        loop {
+            val = fn[*cache]
+            cache.shift
+            cache << val
+            out << val
+        }
+    }
 end
 
 if $0 == __FILE__

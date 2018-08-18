@@ -92,10 +92,26 @@ tidy_func_def(:showln) { |enum, max=Infinity|
     puts
 }
 
+tidy_func_def(:recur) { |*args|
+    slice = if Numeric === args.last
+        args.pop
+    else
+        1
+    end
+    *seeds, fn = args
+    recursive_enum seeds, fn, slice: slice
+}
+tidy_func_def(:recur2) { |*seeds, fn|
+    recursive_enum seeds, fn, slice: 2
+}
+tidy_curry_def(:slices) { |count, enum|
+
+}
+
 tidy_func_def(:put) { |*args|
     args.each { |arg|
         case arg
-            when Enumerator, LazyEnumerator
+            when enum_like
                 show arg, 12
             when File
                 print "File(#{arg.path})"
@@ -197,7 +213,7 @@ tidy_func_def(:get_var) { |name|
 tidy_func_def(:count) { |a, e=:not_passed|
     if e == :not_passed
         case a
-            when Enumerator
+            when enum_like
                 a.force.size
             when Array, String
                 a.size
@@ -285,7 +301,7 @@ define_method(:op_get, &curry(lambda { |source, index|
     case source
         when Array, String
             source[index]
-        when Enumerable
+        when enum_like
             if index < 0
                 source.force[index]
             else

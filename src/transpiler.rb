@@ -94,7 +94,7 @@ class Tidy2Ruby < TidyTranspiler
             rescue NoOperatorException
                 binary = nil
             end
-            if unary && binary
+            if unary && binary && op != "*"
                 "lambda { |x, y=:unpassed|
                     set_var_local(\"x\", x)
                     if y == :unpassed
@@ -104,16 +104,16 @@ class Tidy2Ruby < TidyTranspiler
                         #{binary}
                     end
                 }"
-            elsif unary
-                "lambda { |x|
-                    set_var_local(\"x\", x)
-                    #{unary}
-                }"
             elsif binary
                 "lambda { |x, y|
                     set_var_local(\"x\", x)
                     set_var_local(\"y\", y)
                     #{binary}
+                }"
+            elsif unary
+                "lambda { |x|
+                    set_var_local(\"x\", x)
+                    #{unary}
                 }"
             else
                 raise "operator #{op} does not exist"
@@ -201,6 +201,8 @@ class Tidy2Ruby < TidyTranspiler
                         "op_tilde(#{mapped.join})"
                     when "."
                         "call_func(#{mapped.join ", "})"
+                    when "*"
+                        "*(#{mapped.join ", "})"
                     else
                         raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
                 end
