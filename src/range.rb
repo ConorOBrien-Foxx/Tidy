@@ -88,7 +88,7 @@ end
 def tidy_range(*args)
     range = TidyRange.new(*args)
     if block_given?
-        range.map { |args| yield *args }
+        range.map { |args| yield *args }.force
     else
         range
     end

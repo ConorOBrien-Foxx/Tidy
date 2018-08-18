@@ -23,13 +23,14 @@ def from_base(b, a)
     a.map.with_index { |e, i| e * b**(a.size - i - 1) }.sum
 end
 
-def print_enum(enum, separator=", ", &pr)
+def print_enum(enum, separator=", ", max: Infinity, &pr)
     copy = enum.to_enum
 
     pr = lambda { |x| print x } if pr.nil?
 
     queue = []
 
+    count = max == Infinity ? -Infinity : 0
     loop {
         break if until queue.size >= 2
             begin
@@ -39,7 +40,13 @@ def print_enum(enum, separator=", ", &pr)
             end
         end
         pr[queue.shift] unless queue.empty?
+        count += 1
         print separator
+        if count >= max
+            print "..."
+            queue.clear
+            break
+        end
     }
     pr[queue.pop] unless queue.empty?
 
@@ -75,15 +82,21 @@ def eval_tidy(code)
     eval result
 end
 
+tidy_func_def(:show) { |enum, max=Infinity|
+    print "["
+    print_enum(enum, max: max) { |e| put e }
+    print "]"
+}
+tidy_func_def(:showln) { |enum, max=Infinity|
+    show enum, max
+    puts
+}
+
 tidy_func_def(:put) { |*args|
     args.each { |arg|
         case arg
             when Enumerator, LazyEnumerator
-                print "["
-                print_enum(arg) { |e|
-                    put e
-                }
-                print "]"
+                show arg, 12
             when File
                 print "File(#{arg.path})"
             else
@@ -217,6 +230,13 @@ tidy_func_def(:enum) { |fn|
     }
 }
 tidy_func_def(:c) { |*args| args }
+tidy_func_def(:first) { |coll, n=:not_passed|
+    if n == :not_passed
+        coll.first
+    else
+        coll.first n
+    end
+}
 
 def local_descend
     $locals << {}
@@ -351,7 +371,7 @@ def op_caret(left, right)
         when istype(Numeric, Numeric)
             left ** right
         when istype(Numeric, Enumerator)
-            right.take(left)
+            right.first(left)
         when istype(Enumerator, Numeric)
             left.drop(right)
         when istype(Proc, Numeric)

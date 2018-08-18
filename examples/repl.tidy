@@ -1,4 +1,5 @@
 force({
     line .= readline("> ")
-    out(eval(line))
+    res .= eval(line)
+    out(res) if res /= nil
 } on N)
