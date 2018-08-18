@@ -197,6 +197,18 @@ tidy_func_def(:map) { |fn, enum|
 tidy_func_def(:prime) { |n|
     Prime.prime? n
 }
+tidy_func_def(:takewhile) { |cond, enum|
+    enum.take_while { |e| truthy cond[e] }
+}
+tidy_func_def(:dropwhile) { |cond, enum|
+    enum.drop_while { |e| truthy cond[e] }
+}
+tidy_func_def(:takeuntil) { |cond, enum|
+    enum.take_while { |e| not truthy cond[e] }
+}
+tidy_func_def(:dropuntil) { |cond, enum|
+    enum.drop_while { |e| not truthy cond[e] }
+}
 $locals = [{}]
 tidy_func_def(:set_var) { |name, val|
     $variables[name] = val
