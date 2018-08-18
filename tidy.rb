@@ -149,7 +149,7 @@ tidy_func_def(:out) { |*args|
 tidy_func_def(:truthy) { |el|
     el != 0 && el
 }
-tidy_func_def(:readline) { |prompt, hist=true|
+tidy_func_def(:prompt) { |prompt, hist=true|
     Readline.readline(prompt, hist)
 }
 tidy_func_def(:write) { |*args|

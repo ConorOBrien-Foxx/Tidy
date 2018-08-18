@@ -1,5 +1,5 @@
 force({
-    line .= readline("> ")
+    line .= prompt("> ")
     res .= eval(line)
     out(res) if res /= nil
 } on N)
