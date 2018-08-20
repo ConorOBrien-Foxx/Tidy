@@ -93,7 +93,7 @@ end
 
 def enum_like
     lambda { |x|
-        Enumerator === x || LazyEnumerator === x
+        Enumerable === x || LazyEnumerator === x
     }
 end
 

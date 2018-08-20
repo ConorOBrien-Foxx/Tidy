@@ -33,6 +33,13 @@ $variables = {
 }
 
 def print_enum(enum, separator=", ", max: Infinity, &pr)
+    if Array === enum
+        enum.each_with_index { |e, i|
+            pr[e]
+            print separator unless i + 1 == enum.size
+        }
+        return
+    end
     copy = enum.to_enum
 
     pr = lambda { |x| print x } if pr.nil?
