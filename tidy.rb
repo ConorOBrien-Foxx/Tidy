@@ -61,16 +61,14 @@ def print_enum(enum, separator=", ", max: Infinity, &pr)
 
 end
 
-$VALID_FUNCTIONS = ["exit"]
+$FUNCTION_ALIASES = {
+    "exit" => "exit"
+}
 def tidy_func_def(name, global: true, &block)
-    if global
-        $VALID_FUNCTIONS << name.to_s
-        define_method(name) { |*args| block[*args] }
-    else
-        $variables[name.to_s] = lambda { |*args|
-            block[args]
-        }
-    end
+    name = name.to_s
+    key = global ? name : "tidy_#{name}"
+    $FUNCTION_ALIASES[name] = key
+    define_method(key) { |*args| block[*args] }
 end
 
 tidy_func_def(:curry) { |fn, arity=fn.arity|
@@ -88,9 +86,11 @@ tidy_func_def(:curry) { |fn, arity=fn.arity|
 
 $variables["range"] = curry(lambda(&method(:tidy_range)), 2)
 
-def tidy_curry_def(name, arity=nil, &block)
-    $VALID_FUNCTIONS << name.to_s
-    define_method name, &curry(block, arity || block.arity)
+def tidy_curry_def(name, arity=nil, global: true, &block)
+    name = name.to_s
+    key = global ? name : "tidy_#{name}"
+    $FUNCTION_ALIASES[name] = key
+    define_method key, &curry(block, arity || block.arity)
 end
 
 def eval_tidy(code)
@@ -232,8 +232,8 @@ tidy_func_def(:get_var) { |name|
         local[name]
     elsif $variables.has_key? name
         $variables[name]
-    elsif $VALID_FUNCTIONS.include? name
-        lambda(&method(name))
+    elsif $FUNCTION_ALIASES.has_key? name
+        lambda(&method($FUNCTION_ALIASES[name]))
     else
         raise "undefined variable/function #{name}"
     end
@@ -265,6 +265,24 @@ tidy_func_def(:enum) { |fn|
         fn[out]
     }
 }
+tidy_func_def(:I, global: false) { |es|
+    LazyEnumerator.new { |o|
+        es.each_with_index { |e, i|
+            o << i
+        }
+    }
+}
+tidy_func_def(:prefixes) { |es|
+    tidy_I(es).map { |i|
+        op_get(es, tidy_range(0, i))
+    }
+}
+tidy_func_def(:suffixes) { |es|
+    tidy_I(es).map { |i|
+        op_get(es, tidy_range(~i, -1))
+    }
+}
+
 [:sqrt, :sin, :cos, :tan].each { |k|
     tidy_func_def(k) { |arg| Math.send k, arg }
 }
@@ -359,12 +377,20 @@ tidy_func_def(:same) { |*args|
     args = args.flatten
     args.all? { |e| e == args.first }
 }
+tidy_func_def(:join, global: false) { |a, b=""|
+    a = a.force if enum_like[a]
+    a.join b
+}
+tidy_func_def(:split, global: false) { |a, b=/\s+/|
+    a = a.force if enum_like[a]
+    a.split b
+}
 
 def call_func(fn, *args)
     case fn
         when String
-            if $VALID_FUNCTIONS.include? fn
-                send fn, *args
+            if $FUNCTION_ALIASES.has_key? fn
+                send $FUNCTION_ALIASES[fn], *args
             elsif fn == "inf"
                 tidy_range(args.first, Infinity)
             elsif fn = get_var(fn)

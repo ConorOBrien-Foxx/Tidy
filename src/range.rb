@@ -19,6 +19,10 @@ class Character
         "'#{chr}"
     end
 
+    def to_s
+        chr
+    end
+
     [:+, :-, :/, :*].each { |k|
         define_method(k) { |n|
             Character.new @val.send k, n.to_i
