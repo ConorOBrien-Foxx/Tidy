@@ -437,9 +437,15 @@ def op_from(pred, source)
     source.select { |*args| truthy pred[*args] }
 end
 def op_on(pred, source)
-    source.map { |e|
-        pred[e]
-    }
+    if Proc === source
+        lambda { |*args|
+            op_on(pred, source[*args])
+        }
+    else
+        source.map { |e|
+            pred[e]
+        }
+    end
 end
 def op_over(qual, source)
     source.inject(&qual)
