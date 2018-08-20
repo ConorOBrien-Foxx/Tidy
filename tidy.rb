@@ -290,7 +290,7 @@ tidy_func_def(:suffixes) { |es|
     }
 }
 tidy_func_def(:stoa) { |str|
-    str.chars.each { |c| Character.new c }
+    str.chars.map { |c| Character.new c }
 }
 
 [:sqrt, :sin, :cos, :tan].each { |k|
