@@ -282,6 +282,9 @@ tidy_func_def(:suffixes) { |es|
         op_get(es, tidy_range(~i, -1))
     }
 }
+tidy_func_def(:stoa) { |str|
+    str.chars.each { |c| Character.new c }
+}
 
 [:sqrt, :sin, :cos, :tan].each { |k|
     tidy_func_def(k) { |arg| Math.send k, arg }
