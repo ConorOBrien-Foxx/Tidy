@@ -333,19 +333,25 @@ tidy_curry_def(:chunk) { |a, b|
 }
 
 define_method(:op_get, &curry(lambda { |source, index|
-    case source
-        when Array, String
-            source[index]
-        when enum_like
-            if index < 0
-                source.force[index]
+    if enum_like[index] || Array === index
+        index.map { |i|
+            op_get(source, i)
+        }
+    else
+        case source
+            when Array, String
+                source[index]
+            when enum_like
+                if index < 0
+                    source.force[index]
+                else
+                    source.take(index + 1).force[index]
+                end
             else
-                source.take(index + 1).force[index]
-            end
-        else
-            lambda { |*args|
-                source[index[*args]]
-            }
+                lambda { |*args|
+                    source[index[*args]]
+                }
+        end
     end
 }))
 
