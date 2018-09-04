@@ -30,6 +30,7 @@ $variables = {
     "false" => false,
     "nil" => nil,
     "inf" => Infinity,
+    "argv" => ARGV,
 }
 
 def print_enum(enum, separator=", ", max: Infinity, &pr)
@@ -302,6 +303,9 @@ tidy_func_def(:stoa) { |str|
     }
 }
 tidy_func_def(:c) { |*args| args }
+tidy_func_def(:int, &lambda { |n, base=10| n.to_i base rescue n.to_i })
+tidy_func_def(:str, &lambda { |n, *args| n.to_s *args })
+tidy_func_def(:chr) { |a| Character.new a }
 tidy_func_def(:first, global: false) { |coll, n=:not_passed|
     if n == :not_passed
         coll.first
@@ -362,6 +366,7 @@ tidy_curry_def(:chunk) { |a, b|
 
 tidy_curry_def(:index, global: false) { |a, needle, start=0|
     found = nil
+    start ||= 0
     a.drop(start).each_with_index { |e, i|
         break found = i if e == needle
     }
@@ -412,16 +417,17 @@ def call_func(fn, *args)
             elsif fn == "inf"
                 tidy_range(args.first, Infinity)
             elsif fn = get_var(fn)
-                fn[*args]
+                call_func(fn, *args)
             else
                 STDERR.puts "undeclared function #{fn.inspect}"
                 exit
             end
         when Proc
             fn[*args]
-        when enum_like
-            
+        when Array
             fn[*args]
+        when enum_like
+            fn.take(args[0] + 1).to_a[args[0]]
         else
             raise 'idk'
     end

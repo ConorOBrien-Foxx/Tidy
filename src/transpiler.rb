@@ -238,6 +238,7 @@ class Tidy2Ruby < TidyTranspiler
                         "raise TidyStopIteration if #{mapped.map{|e|"(#{e})"}.join "&&"}"
                     when "q"
                         a, b, c = mapped.map { |e| "(#{e})" }
+                        c ||= "nil"
                         "(#{a} ? #{b} : #{c})"
                     else
                         "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
