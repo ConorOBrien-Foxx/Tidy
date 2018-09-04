@@ -62,21 +62,25 @@ end
 
 # https://stackoverflow.com/a/16052401/4119004
 module LazyEnumerable
-  include Enumerable
+    include Enumerable
 
-  def self.make_lazy(*methods)
-    methods.each do |method|
-      define_method method do |*args, &block|
-        lazy.public_send(method, *args, &block)
-      end
+    def self.make_lazy(*methods)
+        methods.each do |method|
+            define_method method do |*args, &block|
+                lazy.public_send(method, *args, &block)
+            end
+        end
     end
-  end
 
-  def force
+    def [](n)
+        take(n + 1).force[n]
+    end
+
+    def force
       to_a
-  end
+    end
 
-  make_lazy *(Enumerable.public_instance_methods - [:lazy])
+    make_lazy *(Enumerable.public_instance_methods - [:lazy])
 end
 
 class LazyEnumerator

@@ -361,9 +361,11 @@ tidy_curry_def(:chunk) { |a, b|
 }
 
 tidy_curry_def(:index, global: false) { |a, needle, start=0|
+    found = nil
     a.drop(start).each_with_index { |e, i|
-        break i if e == needle
+        break found = i if e == needle
     }
+    found
 }
 
 define_method(:op_get, &curry(lambda { |source, index|
@@ -393,14 +395,14 @@ tidy_func_def(:same) { |*args|
     args = args.flatten
     args.all? { |e| e == args.first }
 }
-tidy_func_def(:join, global: false) { |a, b=""|
-    a = a.force if enum_like[a]
+tidy_func_def(:join, global: false, &lambda { |a, b=""|
+    a = a.force if not (a.respond_to? :join) && enum_like[a]
     a.join b
-}
-tidy_func_def(:split, global: false) { |a, b=/\s+/|
+})
+tidy_func_def(:split, global: false, &lambda { |a, b=/\s+/|
     a = a.force if enum_like[a]
     a.split b
-}
+})
 
 def call_func(fn, *args)
     case fn
@@ -416,6 +418,9 @@ def call_func(fn, *args)
                 exit
             end
         when Proc
+            fn[*args]
+        when enum_like
+            
             fn[*args]
         else
             raise 'idk'
@@ -456,7 +461,7 @@ def op_on(pred, source)
         }
     else
         source.map { |e|
-            pred[e]
+            call_func pred, e
         }
     end
 end
