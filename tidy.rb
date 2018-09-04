@@ -337,7 +337,7 @@ def op_slashslash(a, b)
     end
 end
 def op_dot(a, b)
-    raise "no such behaviour"
+    "#{a}#{b}"
 end
 
 tidy_curry_def(:chunk) { |a, b|

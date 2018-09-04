@@ -20,6 +20,7 @@ module Operators
         "from"      => [20, :right],
         "over"      => [20, :right],
         "on"        => [20, :right],
+        "."         => [30, :left],
         "-"         => [40, :left],
         "+"         => [40, :left],
         "*"         => [60, :left],
@@ -29,7 +30,6 @@ module Operators
         "^"         => [70, :right],
         "@"         => [80, :left],
         "&"         => [80, :left],
-        "."         => [100, :left],
     }
 
     PRECEDENCE = PRECEDENCE_ASSOCIATIVITY.map { |k, v| [k, v.first] } .to_h
