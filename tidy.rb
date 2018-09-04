@@ -360,6 +360,12 @@ tidy_curry_def(:chunk) { |a, b|
     }
 }
 
+tidy_curry_def(:index, global: false) { |a, needle, start=0|
+    a.drop(start).each_with_index { |e, i|
+        break i if e == needle
+    }
+}
+
 define_method(:op_get, &curry(lambda { |source, index|
     if enum_like[index] || Array === index
         index.map { |i|
