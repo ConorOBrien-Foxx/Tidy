@@ -189,9 +189,9 @@ tidy_func_def(:close) { |file_object|
     file_object.close
 }
 
-tidy_func_def(:cycle) { |enum, amount=nil|
+tidy_func_def(:cycle, &lambda { |enum, amount=nil|
     enum.cycle(amount)
-}
+})
 tidy_curry_def(:tile) { |amount, enum|
     enum.tile(amount)
 }
