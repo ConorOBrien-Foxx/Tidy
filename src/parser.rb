@@ -9,7 +9,8 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     def data?
         [
             :number, :atom, :word, :infinity,
-            :op_quote, :string, :character
+            :op_quote, :string, :character,
+            :pattern_string
         ].include? type
     end
 
@@ -115,6 +116,11 @@ class TidyTokenizer
         has_ahead? STRING_REGEX
     end
 
+    PATTERN_STRING = /[A-Za-z]?`([^`]|``)*`/
+    def pattern_string?
+        has_ahead? PATTERN_STRING
+    end
+
     def read_token
         unless @queue.empty?
             return @queue.shift
@@ -147,6 +153,10 @@ class TidyTokenizer
             advance @match.size
         elsif string?
             res.type = :string
+            res.raw = @match
+            advance @match.size
+        elsif pattern_string?
+            res.type = :pattern_string
             res.raw = @match
             advance @match.size
         elsif operator?

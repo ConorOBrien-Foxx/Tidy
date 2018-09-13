@@ -189,6 +189,9 @@ tidy_func_def(:close) { |file_object|
     file_object.close
 }
 
+tidy_func_def(:cycle) { |enum, amount=nil|
+    enum.cycle(amount)
+}
 tidy_curry_def(:tile) { |amount, enum|
     enum.tile(amount)
 }
@@ -553,6 +556,12 @@ tidy_func_def(:even) { |n| n.even? }
 tidy_func_def(:odd) { |n| n.odd? }
 tidy_func_def(:splice) { |*seqs|
     SplicedSequence.new(*seqs)
+}
+
+# pattern string functions
+
+tidy_func_def(:pt_w) { |str|
+    str.split
 }
 
 if $0 == __FILE__

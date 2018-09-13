@@ -72,6 +72,16 @@ class Tidy2Ruby < TidyTranspiler
                 .gsub(/""/, '"')[1..-2]
                 .gsub(/\\[nt\\]/) { eval '"' + $& + '"' }
             "'#{inner}'"
+        elsif leaf.type == :pattern_string
+            head = leaf.raw[0]
+            inner = leaf.raw
+                .gsub(/``/, '`')[2..-2]
+                .gsub(/\\[nt\\]/) { eval '"' + $& + '"' }
+            res = "'#{inner}'"
+            unless head == '`'
+                res = "call_func(\"pt_#{head}\", #{res})"
+            end
+            res
         elsif leaf.type == :op_quote
             op = leaf.raw.match(/\((.+)\)/)[1].strip
             begin
