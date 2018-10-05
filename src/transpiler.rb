@@ -181,6 +181,8 @@ class Tidy2Ruby < TidyTranspiler
                         "op_pipeline(#{mapped.join ", "})"
                     when "in"
                         "op_in(#{mapped.join ", "})"
+                    when "!in"
+                        "!op_in(#{mapped.join ", "})"
                     when "."
                         "op_dot(#{mapped.join ", "})"
                     when ":="
@@ -213,6 +215,8 @@ class Tidy2Ruby < TidyTranspiler
                         "op_tilde(#{mapped.join})"
                     when "."
                         "call_func(#{mapped.join ", "})"
+                    when "!"
+                        "!truthy(#{mapped.join ", "})"
                     when "*"
                         "*(#{mapped.join ", "})"
                     else
