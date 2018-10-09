@@ -256,6 +256,12 @@ def local_ascend
     $locals.pop
 end
 
+tidy_func_def(:f, global: false) { |e|
+    e.to_f
+}
+tidy_func_def(:i, global: false) { |e|
+    e.to_i
+}
 
 tidy_func_def(:count, global: false) { |a, e=:not_passed|
     if e == :not_passed
