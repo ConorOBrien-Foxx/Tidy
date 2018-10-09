@@ -123,6 +123,14 @@ class TidyRange < LazyEnumerator
         end
     end
 
+    def min
+        @lower
+    end
+
+    def max
+        @upper - (@upper - @lower) % @step
+    end
+
     def include?(n)
         [
             (n - @lower) % @step == 0,

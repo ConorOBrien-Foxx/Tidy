@@ -541,6 +541,11 @@ $variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])
 $variables["odds"] = tidy_range(1, Infinity, 2)
 $variables["evens"] = tidy_range(0, Infinity, 2)
 
+tidy_func_def(:digits) { |e|
+    e.digits.reverse
+}
+tidy_func_def(:min) { |a| a.min }
+tidy_func_def(:max) { |a| a.max }
 tidy_func_def(:sum) { |arg|
     arg.inject(0, :+)
 }
