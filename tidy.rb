@@ -249,6 +249,14 @@ tidy_func_def(:get_var) { |name|
         raise "undefined variable/function #{name}"
     end
 }
+def local_descend
+    $locals << {}
+end
+def local_ascend
+    $locals.pop
+end
+
+
 tidy_func_def(:count, global: false) { |a, e=:not_passed|
     if e == :not_passed
         case a
@@ -323,13 +331,6 @@ tidy_func_def(:last, global: false) { |coll, n=:not_passed|
         coll.last n
     end
 }
-
-def local_descend
-    $locals << {}
-end
-def local_ascend
-    $locals << {}
-end
 
 def op_slashslash(a, b)
     case [a, b]

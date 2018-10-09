@@ -108,6 +108,7 @@ class Tidy2Ruby < TidyTranspiler
             end
             if unary && binary && op != "*"
                 "lambda { |x, y=:unpassed|
+                    local_descend
                     set_var_local(\"x\", x)
                     if y == :unpassed
                         #{unary}
@@ -115,17 +116,21 @@ class Tidy2Ruby < TidyTranspiler
                         set_var_local(\"y\", y)
                         #{binary}
                     end
+                    local_ascend
                 }"
             elsif binary
                 "lambda { |x, y|
+                    local_descend
                     set_var_local(\"x\", x)
                     set_var_local(\"y\", y)
                     #{binary}
                 }"
             elsif unary
                 "lambda { |x|
+                    local_descend
                     set_var_local(\"x\", x)
                     #{unary}
+                    local_ascend
                 }"
             else
                 raise "operator #{op} does not exist"
