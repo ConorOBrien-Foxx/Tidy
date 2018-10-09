@@ -256,11 +256,11 @@ def local_ascend
     $locals.pop
 end
 
-tidy_func_def(:f, global: false) { |e|
+tidy_func_def(:float, global: false) { |e|
     e.to_f
 }
-tidy_func_def(:i, global: false) { |e|
-    e.to_i
+tidy_func_def(:int, global: false) { |e, *args|
+    e.to_i *args
 }
 
 tidy_func_def(:count, global: false) { |a, e=:not_passed|
