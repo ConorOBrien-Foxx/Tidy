@@ -152,7 +152,7 @@ class Tidy2Ruby < TidyTranspiler
 
             elsif head.type == :operator
                 mapped = tree.children.map { |child|
-                    "#{transpile child}"
+                    "(#{transpile child})"
                 }
                 case head.raw
                     when *RUBY_OPERATORS
