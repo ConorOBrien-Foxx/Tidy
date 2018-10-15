@@ -473,6 +473,12 @@ tidy_curry_def(:chunk) { |a, b|
     }
 }
 
+tidy_func_def(:fchunk, global: false) { |list, fn|
+    list.chunk { |e|
+        fn[e]
+    }
+}
+
 tidy_curry_def(:index, global: false) { |a, needle, start=0|
     found = nil
     start ||= 0
