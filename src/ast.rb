@@ -16,7 +16,7 @@ def shunt(code)
 
         previous_token = nil
         tokenize(code) { |token|
-            if token.data?
+            if token.data_start?
                 if previous_token&.data_like?
                     flush(operator_stack, output_queue, initials)
                 end

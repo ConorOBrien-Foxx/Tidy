@@ -6,23 +6,28 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     end
     alias :inspect :to_s
 
+    def of_type?(*types)
+        types.include? type
+    end
+
     def data?
-        [
+        of_type?(
             :number, :atom, :word, :infinity,
             :op_quote, :string, :character,
             :pattern_string
-        ].include? type
+        )
     end
 
     def blank?
-        [:blank].include? type
+        of_type? :blank
+    end
+
+    def data_start?
+        data? || of_type?(:range_open, :block_open)
     end
 
     def data_like?
-        data? || [
-            :paren_close, :range_close, :block_close,
-            # :paren_open, :range_open, :block_open,
-        ].include?(type)
+        data? || of_type?(:paren_close, :range_close, :block_close)
     end
 
     def operator?
