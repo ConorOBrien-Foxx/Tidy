@@ -503,9 +503,9 @@ def op_caret(left, right)
     case [left, right]
         when istype(Numeric, Numeric)
             left ** right
-        when istype(Numeric, Enumerator)
+        when istype(Numeric, enum_like)
             right.first(left)
-        when istype(Enumerator, Numeric)
+        when istype(enum_like, Numeric)
             left.drop(right)
         when istype(Proc, Numeric)
             lambda { |n, *rest|
