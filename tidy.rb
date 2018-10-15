@@ -569,6 +569,11 @@ tidy_func_def(:odd) { |n| n.odd? }
 tidy_func_def(:splice) { |*seqs|
     SplicedSequence.new(*seqs)
 }
+tidy_func_def(:load, global: false) { |file_name|
+    content = File.read(file_name, encoding: "utf-8")
+    t2r = Tidy2Ruby.new content
+    eval t2r.to_a.join("\n")
+}
 
 # pattern string functions
 
