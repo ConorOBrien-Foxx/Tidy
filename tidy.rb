@@ -3,6 +3,7 @@
 require_relative 'src/transpiler.rb'
 require 'readline'
 require 'prime'
+require 'set'
 
 class TidyStopIteration < Exception
 
@@ -230,6 +231,104 @@ tidy_func_def(:takeuntil) { |cond, enum|
 tidy_func_def(:dropuntil) { |cond, enum|
     enum.drop_while { |e| not truthy cond[e] }
 }
+tidy_func_def(:tr, &lambda { |list, fill=nil|
+    LazyEnumerator.new { |out|
+        enums = list.map(&:to_enum)
+        count = enums.size
+        loop {
+            stop_count = 0
+            sublist = enums.map { |enum|
+                begin
+                    enum.next
+                rescue StopIteration
+                    stop_count += 1
+                    fill
+                end
+            }
+            break if stop_count == count
+            out << sublist
+        }
+    }
+})
+tidy_func_def(:unite) { |*lists|
+    LazyEnumerator.new { |out|
+        tally = Set[]
+        lists.each { |list|
+            [*list].each { |el|
+                next if tally.include? el
+                tally << el
+                out << el
+            }
+        }
+    }
+}
+
+# apparently intersection with possibly-infinite lists is non-trivial
+tidy_func_def(:intersect) { |*lists|
+    LazyEnumerator.new { |out|
+        candidates = Hash.new { |h, q|
+            h[q] = Set[]
+        }
+        tally = Set[:none]
+        size = lists.size
+
+        iter = tr(lists, :none).to_enum
+
+        ## candidate selection
+        c = nil
+        loop {
+            c = iter.next
+
+            c.each_with_index { |e, i|
+                # ignore included entries
+                next if tally.include? e
+
+                # otherwise, append `i` to `e`s index list
+                candidates[e] << i
+
+                # if all indices are accounted for
+                if candidates[e].size == size
+                    # add it to the tally and update the candidate list
+                    out << e
+                    candidates.delete e
+                    tally << e
+                end
+            }
+
+            # if there are any :none values, we can begin redemption
+            break if c.include? :none
+        }
+
+        ## candidate redemption
+        # the indices to track
+        invalid = (0...c.size).select { |e| c[e] != :none }
+        # remove any members having invalid indices
+        candidates.reject! { |e, inds|
+            inds.any? { |i| invalid.include? i }
+        }
+        # remove defaulting behavior
+        candidates.default_proc = nil
+
+        until candidates.empty?
+            c = iter.next
+            # TODO: figure out if this next line is necessary
+            break if c.all? :none
+
+            c.each_with_index { |e, i|
+                next if tally.include? e
+
+                candidates[e] << i if candidates.include? e
+                # if the candidate exists and is filled
+                if candidates[e]&.size == size
+                    out << e
+                    candidates.delete e
+                    tally << e
+                end
+            }
+        end
+    }
+}
+
 $locals = [{}]
 tidy_func_def(:set_var) { |name, val|
     $variables[name] = val
