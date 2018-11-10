@@ -362,13 +362,13 @@ tidy_func_def(:int, global: false) { |e, *args|
     e.to_i *args
 }
 
-tidy_func_def(:count, global: false) { |a, e=:not_passed|
+tidy_func_def(:count, global: false, &lambda { |a, e=:not_passed|
     if e == :not_passed
         case a
-            when enum_like
-                a.force.size
             when Array, String
                 a.size
+            when enum_like
+                a.force.size
             when Numeric
                 a.abs.to_s.size
             else
@@ -383,7 +383,7 @@ tidy_func_def(:count, global: false) { |a, e=:not_passed|
                 a.count(e)
         end
     end
-}
+})
 tidy_func_def(:enum) { |fn|
     LazyEnumerator.new { |out|
         fn[out]
@@ -473,6 +473,10 @@ tidy_curry_def(:chunk) { |a, b|
     }
 }
 
+tidy_func_def(:log, global: false) { |n, base=10|
+    Math::log n, base
+}
+
 tidy_func_def(:fchunk, global: false) { |list, fn|
     list.chunk { |e|
         fn[e]
@@ -542,7 +546,31 @@ def call_func(fn, *args)
         when Array
             fn[*args]
         when enum_like
-            fn.take(args[0] + 1).to_a[args[0]]
+            # TODO: make more efficent (don't store results in array)
+            if args.size > 3
+                raise "unsupported arity for indexing #{args.size}"
+            end
+            if args.any? &:negative?
+                fn = fn.to_a
+                args.map! { |e|
+                    e + fn.size if e.negative?
+                }
+            end
+            case args.size
+                when 1
+                    index = args[0]
+                    fn.take(index + 1).to_a[index]
+                when 2
+                    start, finish = args
+                    fn.take(start + finish + 1).to_a[start...finish]
+                when 3
+                    range = tidy_range(*args)
+
+                    array = fn.take(range.min + range.max + 1).to_a
+                    range.map { |i|
+                        array[i]
+                    }
+            end
         else
             raise 'idk'
     end
@@ -702,6 +730,9 @@ if $0 == __FILE__
         opts.on("-e", "--execute CODE", "Executes CODE in Tidy") { |v|
             options[:code] = v
         }
+        opts.on("-o", "--out-file FILE", "Generates a compiled output") { |v|
+            options[:out_file] = v
+        }
         opts.on("-r", "--repl", "Engages the repl") { |v|
             options[:repl] = v
         }
@@ -746,5 +777,11 @@ if $0 == __FILE__
     tr = Tidy2Ruby.new code
     code = tr.to_a.join("\n")
     puts code if options[:show_code]
-    eval code
+    if options[:out_file]
+        out = File.open(options[:out_file], "w")
+        out.write "require_relative 'tidy.rb'\n"
+        out.write code
+    else
+        eval code
+    end
 end
