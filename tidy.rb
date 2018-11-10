@@ -553,7 +553,7 @@ def call_func(fn, *args)
             if args.any? &:negative?
                 fn = fn.to_a
                 args.map! { |e|
-                    e + fn.size if e.negative?
+                    e.negative? ? e + fn.size : e
                 }
             end
             case args.size
@@ -562,7 +562,7 @@ def call_func(fn, *args)
                     fn.take(index + 1).to_a[index]
                 when 2
                     start, finish = args
-                    fn.take(start + finish + 1).to_a[start...finish]
+                    fn.take(start + finish + 1).to_a[start..finish]
                 when 3
                     range = tidy_range(*args)
 
@@ -663,7 +663,7 @@ def op_pipeline(a, b)
         when istype(Numeric, Numeric)
             b % a == 0
         else
-            raise "invalid arguments for `|`: #{a} and #{fn}"
+            raise "invalid arguments for `|`: #{a} and #{b}"
     end
 end
 def op_in(a, b)
