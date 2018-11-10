@@ -255,7 +255,7 @@ class Tidy2Ruby < TidyTranspiler
                 case name
                     when "break"
                         "raise TidyStopIteration if #{mapped.map{|e|"(#{e})"}.join "&&"}"
-                    when "q"
+                    when "Q"
                         a, b, c = mapped.map { |e| "(#{e})" }
                         c ||= "nil"
                         "(#{a} ? #{b} : #{c})"
