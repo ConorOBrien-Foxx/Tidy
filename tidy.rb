@@ -782,6 +782,16 @@ if $0 == __FILE__
         out.write "require_relative 'tidy.rb'\n"
         out.write code
     else
-        eval code
+        error_caught = :nil
+
+        eval <<~EOF
+            begin
+                #{code}
+            rescue Exception => e
+                error_caught = e
+            end
+        EOF
+
+        raise error_caught unless error_caught.nil?
     end
 end
