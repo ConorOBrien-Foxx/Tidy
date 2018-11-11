@@ -498,19 +498,22 @@ define_method(:op_get, &curry(lambda { |source, index|
             op_get(source, i)
         }
     else
-        case source
-            when Array, String
-                source[index]
-            when enum_like
-                if index < 0
-                    source.force[index]
+        if source.respond_to? :[]
+            source[index]
+        elsif enum_like? source
+            if index < 0
+                if source.respond_to? :reverse
+                    op_get(source.reverse, -index)
                 else
-                    source.take(index + 1).force[index]
+                    source.force[index]
                 end
             else
-                lambda { |*args|
-                    source[index[*args]]
-                }
+                source.take(index + 1).force[index]
+                end
+        else
+            lambda { |*args|
+                source[index[*args]]
+            }
         end
     end
 }))
@@ -702,6 +705,9 @@ tidy_func_def(:max, &lambda { |*a|
     }
 
     a.empty? ? Infinity : a.max
+})
+tidy_func_def(:rev, &lambda { |arr|
+    arr.reverse rescue arr.to_a.reverse
 })
 tidy_func_def(:sum) { |arg|
     arg.inject(0, :+)

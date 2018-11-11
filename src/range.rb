@@ -115,6 +115,10 @@ class TidyRange < LazyEnumerator
         !(@exclude_lower && @lower == i) && !(@exclude_upper && @upper == i)
     end
 
+    def reverse
+        TidyRange.new @upper, @lower, -@step, @exclude_upper, @exclude_lower
+    end
+
     def each(&block)
         i = @lower
         until (i <=> @upper) == @sign
@@ -137,6 +141,16 @@ class TidyRange < LazyEnumerator
 
     def last
         @upper - (@upper - @lower) % @step
+    end
+
+    def [](n)
+        if n < 0
+            reverse[-n - 1]
+        else
+            res = @step * n + @lower
+            raise "#{n} is out of bounds" unless include? res
+            res
+        end
     end
 
     def include?(n)
