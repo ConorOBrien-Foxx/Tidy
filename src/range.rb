@@ -123,15 +123,21 @@ class TidyRange < LazyEnumerator
         end
     end
 
-    def min
+    def first
         @lower
     end
-    alias :first :min
+
+    def min
+        @step < 0 ? last : first
+    end
 
     def max
+        @step < 0 ? first : last
+    end
+
+    def last
         @upper - (@upper - @lower) % @step
     end
-    alias :last :max
 
     def include?(n)
         [

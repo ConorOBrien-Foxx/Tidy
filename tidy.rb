@@ -677,8 +677,32 @@ $variables["evens"] = tidy_range(0, Infinity, 2)
 tidy_func_def(:digits) { |e|
     e.digits.reverse
 }
-tidy_func_def(:min) { |a| a.min }
-tidy_func_def(:max) { |a| a.max }
+tidy_func_def(:min, &lambda { |*a|
+    a = a.flatten.map { |e|
+        if e.respond_to? :min
+            e.min
+        elsif enum_like[e]
+            e.to_a.min
+        else
+            e
+        end
+    }
+
+    a.empty? ? -Infinity : a.min
+})
+tidy_func_def(:max, &lambda { |*a|
+    a = a.flatten.map { |e|
+        if e.respond_to? :max
+            e.max
+        elsif enum_like[e]
+            e.to_a.max
+        else
+            e
+        end
+    }
+
+    a.empty? ? Infinity : a.max
+})
 tidy_func_def(:sum) { |arg|
     arg.inject(0, :+)
 }
