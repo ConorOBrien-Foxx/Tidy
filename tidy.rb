@@ -186,6 +186,9 @@ tidy_func_def(:close) { |file_object|
 tidy_func_def(:gets) { |object=STDIN|
     object.gets
 }
+tidy_func_def(:slurp) { |object=STDIN|
+    object.read
+}
 tidy_func_def(:close) { |file_object|
     file_object.close
 }
