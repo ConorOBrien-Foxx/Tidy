@@ -33,6 +33,12 @@ end
 class Tidy2Ruby < TidyTranspiler
     RUBY_OPERATORS = ["*", "+", "/", "-", "%", "<", ">", "<=", ">="]
     RUBY_UNARY_OPERATORS = ["-", "~"]
+    
+    def initialize(code)
+        super(code)
+        @depth = 0
+    end
+    
     def compile_leaf(leaf)
         if leaf.type == :number
             # TODO: expand
@@ -271,20 +277,37 @@ class Tidy2Ruby < TidyTranspiler
                 else
                     params.join(", ") + ", *discard"
                 end
-                res = "lambda { |#{args}|\n"
-                res += "    local_descend\n"
+                res = ""
+                nested = !@depth.zero?
+                
+                if nested
+                    res += "mylocal = local_save\n"
+                end
+                
+                preindent = " " * 4 * @depth
+                @depth += 1
+                indent = " " * 4 * @depth
+                
+                res += "#{preindent}lambda { |#{args}|\n"
+                res += "#{indent}local_adopt mylocal\n" if nested
+                res += "#{indent}local_descend\n"
                 params.each { |param|
-                    res += "    set_var_local(#{param.inspect}, #{param})\n"
+                    res += "#{indent}set_var_local(#{param.inspect}, #{param})\n"
                 }
+                
                 body.each_with_index { |sub_tree, i|
-                    res += "    "
+                    res += "#{indent}"
                     res += "result = " if i + 1 == body.size
                     res += transpile sub_tree
                     res += "\n"
                 }
-                res += "    local_ascend\n"
-                res += "    result\n"
-                res += "}"
+                
+                @depth -= 1
+                
+                res += "#{indent}local_ascend\n"
+                res += "#{indent}local_evict\n" if nested
+                res += "#{indent}result\n"
+                res += "#{preindent}}"
 
             else
                 raise "unhandled head #{head}"

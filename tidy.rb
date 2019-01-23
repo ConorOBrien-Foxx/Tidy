@@ -363,6 +363,10 @@ tidy_func_def(:set_var_local, &lambda { |name, val|
 
 tidy_func_def(:get_var, &lambda { |name|
     local = $locals.reverse.find { |local| local.has_key? name }
+    # puts ">>>>>>>>>>>>>>"
+    # puts $locals
+    # puts
+    # puts
     if local
         local[name]
     elsif $variables.has_key? name
@@ -373,6 +377,25 @@ tidy_func_def(:get_var, &lambda { |name|
         raise "undefined variable/function #{name}"
     end
 })
+
+$locals_list = []
+def local_adopt(new_local)
+    $locals_list << $locals
+    $locals = new_local
+end
+
+def local_evict
+    $locals = $locals_list.pop
+end
+
+def local_save
+    $locals.map(&:dup)
+end
+
+
+def local_unfreeze
+    $locals = $locals_list.pop
+end
 
 def local_descend
     $locals << {}
@@ -530,10 +553,20 @@ define_method(:op_get, &curry(lambda { |source, index|
         index.map { |i|
             op_get(source, i)
         }
+        
     else
-        if source.respond_to? :[]
+        # function composition
+        if Proc === source
+            lambda { |*args|
+                source[index[*args]]
+            }
+        
+        # inbuilt indexing
+        elsif source.respond_to? :[]
             source[index]
-        elsif enum_like? source
+            
+        # brute force indexing
+        elsif enum_like[source]
             if index < 0
                 if source.respond_to? :reverse
                     op_get(source.reverse, -index)
@@ -543,10 +576,10 @@ define_method(:op_get, &curry(lambda { |source, index|
             else
                 source.take(index + 1).force[index]
                 end
+        
+        # error
         else
-            lambda { |*args|
-                source[index[*args]]
-            }
+            raise "idk"
         end
     end
 }))
