@@ -80,7 +80,7 @@ def tidy_func_def(name, global: true, &block)
     define_method(key) { |*args| block[*args] }
 end
 
-tidy_func_def(:curry) { |fn, arity=fn.arity|
+tidy_func_def(:curry, &lambda { |fn, arity=fn.arity|
     arity = ~arity if arity.negative?
     rec = lambda { |*args|
         if args.size >= arity
@@ -91,7 +91,7 @@ tidy_func_def(:curry) { |fn, arity=fn.arity|
             }
         end
     }
-}
+})
 
 $variables["range"] = curry(lambda(&method(:tidy_range)), 2)
 
@@ -109,17 +109,17 @@ def eval_tidy(code)
 end
 $variables["eval"] = lambda(&method(:eval_tidy))
 
-tidy_func_def(:show) { |enum, max=Infinity|
+tidy_func_def(:show, &lambda { |enum, max=Infinity|
     print "["
     print_enum(enum, max: max) { |e| put e }
     print "]"
-}
-tidy_func_def(:showln) { |enum, max=Infinity|
+})
+tidy_func_def(:showln, &lambda { |enum, max=Infinity|
     show enum, max
     puts
-}
+})
 
-tidy_func_def(:recur) { |*args|
+tidy_func_def(:recur, &lambda { |*args|
     slice = if Numeric === args.last
         args.pop
     else
@@ -127,16 +127,16 @@ tidy_func_def(:recur) { |*args|
     end
     *seeds, fn = args
     recursive_enum seeds, fn, slice: slice
-}
-tidy_func_def(:recur2) { |*seeds, fn|
+})
+tidy_func_def(:recur2, &lambda { |*seeds, fn|
     recursive_enum seeds, fn, slice: 2
-}
-tidy_curry_def(:slices) { |count, enum|
+})
+tidy_curry_def(:slices, &lambda { |count, enum|
     enum.each_cons(count)
-}
-tidy_func_def(:sgn) { |a| a <=> 0 }
+})
+tidy_func_def(:sgn, &lambda { |a| a <=> 0 })
 
-tidy_func_def(:put) { |*args|
+tidy_func_def(:put, &lambda { |*args|
     args.each { |arg|
         case arg
             when enum_like
@@ -147,62 +147,77 @@ tidy_func_def(:put) { |*args|
                 print arg.inspect
         end
     }
-}
-tidy_func_def(:out) { |*args|
+})
+
+tidy_func_def(:out, &lambda { |*args|
     args.each { |arg|
         put arg
         print " "
     }
     puts
-}
-tidy_func_def(:truthy) { |el|
+})
+
+tidy_func_def(:truthy, &lambda { |el|
     el != 0 && el
-}
-tidy_func_def(:prompt) { |prompt, hist=true|
+})
+
+tidy_func_def(:prompt, &lambda { |prompt, hist=true|
     Readline.readline(prompt, hist)
-}
-tidy_func_def(:write) { |*args|
+})
+
+tidy_func_def(:write, &lambda { |*args|
     output = IO === args.first ? args.shift : STDOUT
     output.write *args.join
-}
-tidy_func_def(:readln) { |*args|
+})
+
+tidy_func_def(:readln, &lambda { |*args|
     input = IO === args.first ? args.shift : STDIN
     input.gets
-}
-tidy_func_def(:writeln) { |*args|
+})
+
+tidy_func_def(:writeln, &lambda { |*args|
     output = IO === args.first ? args.shift : STDOUT
     output.write *args.join, "\n"
-}
-tidy_func_def(:append) { |source, *vals|
+})
+
+tidy_func_def(:append, &lambda { |source, *vals|
     vals.each { |val| source << val }
     source
-}
-tidy_func_def(:open) { |file_name, *opts|
+})
+
+tidy_func_def(:open, &lambda { |file_name, *opts|
     File.open(file_name, *opts)
-}
-tidy_func_def(:close) { |file_object|
+})
+
+tidy_func_def(:close, &lambda { |file_object|
     file_object.close
-}
-tidy_func_def(:gets) { |object=STDIN|
+})
+
+tidy_func_def(:gets, &lambda { |object=STDIN|
     object.gets
-}
-tidy_func_def(:close) { |file_object|
+})
+
+tidy_func_def(:close, &lambda { |file_object|
     file_object.close
-}
+})
 
 tidy_func_def(:cycle, &lambda { |enum, amount=nil|
     enum.cycle(amount)
 })
-tidy_curry_def(:tile) { |amount, enum|
+
+tidy_curry_def(:tile, &lambda { |amount, enum|
     enum.tile(amount)
-}
-tidy_curry_def(:skip) { |count, enum|
+})
+
+tidy_curry_def(:skip, &lambda { |count, enum|
     enum.skip(count)
-}
-tidy_curry_def(:take) { |count, enum|
+})
+
+tidy_curry_def(:take, &lambda { |count, enum|
     enum.take(count)
-}
-tidy_func_def(:force) { |enum|
+})
+
+tidy_func_def(:force, &lambda { |enum|
     result = []
     begin
         enum.each { |el|
@@ -212,25 +227,32 @@ tidy_func_def(:force) { |enum|
         result
     end
     result
-}
-tidy_curry_def(:map) { |fn, enum|
+})
+
+tidy_curry_def(:map, &lambda { |fn, enum|
     enum.map { |e| fn[e] }
-}
-tidy_func_def(:prime) { |n|
+})
+
+tidy_func_def(:prime, &lambda { |n|
     Prime.prime? n
-}
-tidy_func_def(:takewhile) { |cond, enum|
+})
+
+tidy_func_def(:takewhile, &lambda { |cond, enum|
     enum.take_while { |e| truthy cond[e] }
-}
-tidy_func_def(:dropwhile) { |cond, enum|
+})
+
+tidy_func_def(:dropwhile, &lambda { |cond, enum|
     enum.drop_while { |e| truthy cond[e] }
-}
-tidy_func_def(:takeuntil) { |cond, enum|
+})
+
+tidy_func_def(:takeuntil, &lambda { |cond, enum|
     enum.take_while { |e| not truthy cond[e] }
-}
-tidy_func_def(:dropuntil) { |cond, enum|
+})
+
+tidy_func_def(:dropuntil, &lambda { |cond, enum|
     enum.drop_while { |e| not truthy cond[e] }
-}
+})
+
 tidy_func_def(:tr, &lambda { |list, fill=nil|
     LazyEnumerator.new { |out|
         enums = list.map(&:to_enum)
@@ -250,7 +272,8 @@ tidy_func_def(:tr, &lambda { |list, fill=nil|
         }
     }
 })
-tidy_func_def(:unite) { |*lists|
+
+tidy_func_def(:unite, &lambda { |*lists|
     LazyEnumerator.new { |out|
         tally = Set[]
         lists.each { |list|
@@ -261,10 +284,10 @@ tidy_func_def(:unite) { |*lists|
             }
         }
     }
-}
+})
 
 # apparently intersection with possibly-infinite lists is non-trivial
-tidy_func_def(:intersect) { |*lists|
+tidy_func_def(:intersect, &lambda { |*lists|
     LazyEnumerator.new { |out|
         candidates = Hash.new { |h, q|
             h[q] = Set[]
@@ -327,16 +350,18 @@ tidy_func_def(:intersect) { |*lists|
             }
         end
     }
-}
+})
 
 $locals = [{}]
-tidy_func_def(:set_var) { |name, val|
+tidy_func_def(:set_var, &lambda { |name, val|
     $variables[name] = val
-}
-tidy_func_def(:set_var_local) { |name, val|
+})
+
+tidy_func_def(:set_var_local, &lambda { |name, val|
     $locals.last[name] = val
-}
-tidy_func_def(:get_var) { |name|
+})
+
+tidy_func_def(:get_var, &lambda { |name|
     local = $locals.reverse.find { |local| local.has_key? name }
     if local
         local[name]
@@ -347,20 +372,22 @@ tidy_func_def(:get_var) { |name|
     else
         raise "undefined variable/function #{name}"
     end
-}
+})
+
 def local_descend
     $locals << {}
 end
+
 def local_ascend
     $locals.pop
 end
 
-tidy_func_def(:float, global: false) { |e|
+tidy_func_def(:float, global: false, &lambda { |e|
     e.to_f
-}
-tidy_func_def(:int, global: false) { |e, *args|
+})
+tidy_func_def(:int, global: false, &lambda { |e, *args|
     e.to_i *args
-}
+})
 
 tidy_func_def(:count, global: false, &lambda { |a, e=:not_passed|
     if e == :not_passed
@@ -384,58 +411,63 @@ tidy_func_def(:count, global: false, &lambda { |a, e=:not_passed|
         end
     end
 })
-tidy_func_def(:enum) { |fn|
+
+tidy_func_def(:enum, &lambda { |fn|
     LazyEnumerator.new { |out|
         fn[out]
     }
-}
-tidy_func_def(:I, global: false) { |es|
+})
+
+tidy_func_def(:I, global: false, &lambda { |es|
     LazyEnumerator.new { |o|
         es.each_with_index { |e, i|
             o << i
         }
     }
-}
-tidy_func_def(:prefixes) { |es|
+})
+
+tidy_func_def(:prefixes, &lambda { |es|
     tidy_I(es).map { |i|
         op_get(es, tidy_range(0, i))
     }
-}
-tidy_func_def(:suffixes) { |es|
+})
+
+tidy_func_def(:suffixes, &lambda { |es|
     tidy_I(es).map { |i|
         op_get(es, tidy_range(~i, -1))
     }
-}
-tidy_func_def(:stoa) { |str|
+})
+
+tidy_func_def(:stoa, &lambda { |str|
     str.chars.map { |c| Character.new c }
-}
+})
 
 [:sqrt, :sin, :cos, :tan].each { |k|
-    tidy_func_def(k) { |arg| Math.send k, arg }
+    tidy_func_def(k, &lambda { |arg| Math.send k, arg })
 }
 [:floor, :ceil, :round].each { |m|
-    tidy_func_def(m) { |arg, prec=nil|
+    tidy_func_def(m, &lambda { |arg, prec=nil|
         arg.send m, *[prec].compact
-    }
+    })
 }
-tidy_func_def(:c) { |*args| args }
+tidy_func_def(:c, &lambda { |*args| args })
 tidy_func_def(:int, &lambda { |n, base=10| n.to_i base rescue n.to_i })
 tidy_func_def(:str, &lambda { |n, *args| n.to_s *args })
-tidy_func_def(:chr) { |a| Character.new a }
-tidy_func_def(:first, global: false) { |coll, n=:not_passed|
+tidy_func_def(:chr, &lambda { |a| Character.new a })
+tidy_func_def(:first, global: false, &lambda { |coll, n=:not_passed|
     if n == :not_passed
         coll.first
     else
         n.first coll
     end
-}
-tidy_func_def(:last, global: false) { |coll, n=:not_passed|
+})
+tidy_func_def(:last, global: false, &lambda { |coll, n=:not_passed|
     if n == :not_passed
         coll.last
     else
         coll.last n
     end
-}
+})
 
 def op_slashslash(a, b)
     case [a, b]
@@ -445,11 +477,12 @@ def op_slashslash(a, b)
             chunk a, b
     end
 end
+
 def op_dot(a, b)
     "#{a}#{b}"
 end
 
-tidy_curry_def(:chunk) { |a, b|
+tidy_curry_def(:chunk, &lambda { |a, b|
     a, b = a.to_enum, b.to_enum
     LazyEnumerator.new { |out|
         loop {
@@ -471,26 +504,26 @@ tidy_curry_def(:chunk) { |a, b|
             out << build
         }
     }
-}
+})
 
-tidy_func_def(:log, global: false) { |n, base=10|
+tidy_func_def(:log, global: false, &lambda { |n, base=10|
     Math::log n, base
-}
+})
 
-tidy_func_def(:fchunk, global: false) { |list, fn|
+tidy_func_def(:fchunk, global: false, &lambda { |list, fn|
     list.chunk { |e|
         fn[e]
     }
-}
+})
 
-tidy_curry_def(:index, global: false) { |a, needle, start=0|
+tidy_curry_def(:index, global: false, &lambda { |a, needle, start=0|
     found = nil
     start ||= 0
     a.drop(start).each_with_index { |e, i|
         break found = i if e == needle
     }
     found
-}
+})
 
 define_method(:op_get, &curry(lambda { |source, index|
     if enum_like[index] || Array === index
@@ -518,10 +551,10 @@ define_method(:op_get, &curry(lambda { |source, index|
     end
 }))
 
-tidy_func_def(:same) { |*args|
+tidy_func_def(:same, &lambda { |*args|
     args = args.flatten
     args.all? { |e| e == args.first }
-}
+})
 tidy_func_def(:join, global: false, &lambda { |a, b=""|
     a = a.force if not (a.respond_to? :join) && enum_like[a]
     a.join b
@@ -677,9 +710,9 @@ $variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])
 $variables["odds"] = tidy_range(1, Infinity, 2)
 $variables["evens"] = tidy_range(0, Infinity, 2)
 
-tidy_func_def(:digits) { |e|
+tidy_func_def(:digits, &lambda { |e|
     e.digits.reverse
-}
+})
 tidy_func_def(:min, &lambda { |*a|
     a = a.flatten.map { |e|
         if e.respond_to? :min
@@ -709,40 +742,40 @@ tidy_func_def(:max, &lambda { |*a|
 tidy_func_def(:rev, &lambda { |arr|
     arr.reverse rescue arr.to_a.reverse
 })
-tidy_func_def(:sum) { |arg|
+tidy_func_def(:sum, &lambda { |arg|
     arg.inject(0, :+)
-}
-tidy_func_def(:prod) { |arg|
+})
+tidy_func_def(:prod, &lambda { |arg|
     arg.inject(1, :*)
-}
-tidy_curry_def(:base) { |base, n|
+})
+tidy_curry_def(:base, &lambda { |base, n|
     to_base(base, n)
-}
-tidy_curry_def(:unbase) { |base, n|
+})
+tidy_curry_def(:unbase, &lambda { |base, n|
     from_base(base, n)
-}
-tidy_func_def(:bin) { |n|
+})
+tidy_func_def(:bin, &lambda { |n|
     to_base(2, n)
-}
-tidy_func_def(:unbin) { |n|
+})
+tidy_func_def(:unbin, &lambda { |n|
     from_base(2, n)
-}
-tidy_func_def(:even) { |n| n.even? }
-tidy_func_def(:odd) { |n| n.odd? }
-tidy_func_def(:splice) { |*seqs|
+})
+tidy_func_def(:even, &lambda { |n| n.even? })
+tidy_func_def(:odd, &lambda { |n| n.odd? })
+tidy_func_def(:splice, &lambda { |*seqs|
     SplicedSequence.new(*seqs)
-}
-tidy_func_def(:load, global: false) { |file_name|
+})
+tidy_func_def(:load, global: false, &lambda { |file_name|
     content = File.read(file_name, encoding: "utf-8")
     t2r = Tidy2Ruby.new content
     eval t2r.to_a.join("\n")
-}
+})
 
 # pattern string functions
 
-tidy_func_def(:pt_w) { |str|
+tidy_func_def(:pt_w, &lambda { |str|
     str.split
-}
+})
 
 if $0 == __FILE__
     require 'optparse'
