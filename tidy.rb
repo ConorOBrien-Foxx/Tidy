@@ -782,6 +782,15 @@ tidy_func_def(:sum, &lambda { |arg|
 tidy_func_def(:prod, &lambda { |arg|
     arg.inject(1, :*)
 })
+tidy_func_def(:diff, &lambda { |arg|
+    if arg.size == 1
+        arg[0]
+    elsif arg.size == 0
+        0
+    else
+        arg.inject(:-)
+    end
+})
 tidy_curry_def(:base, &lambda { |base, n|
     to_base(base, n)
 })

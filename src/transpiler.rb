@@ -262,6 +262,14 @@ class Tidy2Ruby < TidyTranspiler
                         "*(#{mapped.join ", "})"
                     when "not", "¬"
                         "!truthy(#{mapped.join ", "})"
+                    when "⊞"
+                        "sum(#{mapped.join ", "})"
+                    when "⊟"
+                        "diff(#{mapped.join ", "})"
+                    when "⊠"
+                        "prod(#{mapped.join ", "})"
+                    when "⊡"
+                        "tidy_join(#{mapped.join ", "})"
                     else
                         raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
                 end
