@@ -134,6 +134,7 @@ tidy_func_def(:recur2, &lambda { |*seeds, fn|
 tidy_curry_def(:slices, &lambda { |count, enum|
     enum.each_cons(count)
 })
+tidy_func_def(:fac, &lambda { |a| (1..a).inject(1, :*) })
 tidy_func_def(:sgn, &lambda { |a| a <=> 0 })
 
 tidy_func_def(:put, &lambda { |*args|

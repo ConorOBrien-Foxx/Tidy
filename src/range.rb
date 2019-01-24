@@ -58,6 +58,8 @@ module Enumerable
 
     alias :* :tile
     alias :/ :skip
+    alias :+ :each_cons
+    alias :- :each_slice
 end
 
 # https://stackoverflow.com/a/16052401/4119004
@@ -77,7 +79,7 @@ module LazyEnumerable
     end
 
     def force
-      to_a
+        to_a
     end
 
     make_lazy *(Enumerable.public_instance_methods - [:lazy])

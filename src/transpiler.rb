@@ -32,6 +32,11 @@ end
 
 class Tidy2Ruby < TidyTranspiler
     RUBY_OPERATORS = ["*", "+", "/", "-", "%", "<", ">", "<=", ">="]
+    RUBY_OPERATOR_ALIASES = {
+        "≥" => ">=",
+        "≤" => "<=",
+        "≠" => "!=",
+    }
     RUBY_UNARY_OPERATORS = ["-", "~"]
     
     def initialize(code)
@@ -89,7 +94,18 @@ class Tidy2Ruby < TidyTranspiler
             end
             res
         elsif leaf.type == :op_quote
-            op = leaf.raw.match(/\((.+)\)/)[1].strip
+            preindent = " " * 4 * @depth
+            @depth += 1
+            indent = " " * 4 * @depth
+            sub = " " * 4 * (@depth + 1)
+            
+            # determine if abnormal
+            raw = leaf.raw
+            op = if TidyTokenizer::OP_QUOTE_SPECIAL_REGEX === raw
+                TidyTokenizer::OP_SPECIALS[raw]
+            else
+                leaf.raw.match(/\((.+)\)/)[1].strip
+            end
             begin
                 unary = transpile ASTNode.new(
                     TidyToken.new(op, :unary_operator),
@@ -112,35 +128,45 @@ class Tidy2Ruby < TidyTranspiler
             rescue NoOperatorException
                 binary = nil
             end
+            
+            res = ""
             if unary && binary && op != "*"
-                "lambda { |x, y=:unpassed|
-                    local_descend
-                    set_var_local(\"x\", x)
-                    if y == :unpassed
-                        #{unary}
-                    else
-                        set_var_local(\"y\", y)
-                        #{binary}
-                    end
-                    local_ascend
-                }"
+                res += preindent + "lambda { |x, y=:unpassed|\n"
+                res += indent + "local_descend\n"
+                res += indent + "set_var_local(\"x\", x)\n"
+                res += indent + "result = if y == :unpassed\n"
+                res += sub    + unary + "\n"
+                res += indent + "else\n"
+                res += sub    + "set_var_local(\"y\", y)\n"
+                res += sub    + binary + "\n"
+                res += indent + "end\n"
+                res += indent + "local_ascend\n"
+                res += indent + "result\n"
+                res += preindent + "}\n"
             elsif binary
-                "lambda { |x, y|
-                    local_descend
-                    set_var_local(\"x\", x)
-                    set_var_local(\"y\", y)
-                    #{binary}
-                }"
+                res += preindent + "lambda { |x, y|\n"
+                res += indent + "local_descend\n"
+                res += indent + "set_var_local(\"x\", x)\n"
+                res += indent + "set_var_local(\"y\", y)\n"
+                res += indent + "result = #{binary}\n"
+                res += indent + "local_ascend\n"
+                res += indent + "result\n"
+                res += preindent + "}\n"
             elsif unary
-                "lambda { |x|
-                    local_descend
-                    set_var_local(\"x\", x)
-                    #{unary}
-                    local_ascend
-                }"
+                res += preindent + "lambda { |x|\n"
+                res += indent + "local_descend\n"
+                res += indent + "set_var_local(\"x\", x)\n"
+                res += indent + "result = #{unary}\n"
+                res += indent + "local_ascend\n"
+                res += indent + "result\n"
+                res += preindent + "}\n"
             else
                 raise "operator #{op} does not exist"
             end
+            
+            @depth -= 1
+            
+            res
         else
             STDERR.puts "unhandled leaf type #{leaf.type}"
         end
@@ -163,43 +189,47 @@ class Tidy2Ruby < TidyTranspiler
                 case head.raw
                     when *RUBY_OPERATORS
                         mapped.join head.raw
+                    when *RUBY_OPERATOR_ALIASES.keys
+                        mapped.join RUBY_OPERATOR_ALIASES[head.raw]
                     when "//"
                         "op_slashslash(#{mapped.join ", "})"
                     when "@"
                         "op_get(#{mapped.join ", "})"
                     when "&"
                         "op_bind(#{mapped.join ", "})"
-                    when "from"
+                    when "from", "↦"
                         "op_from(#{mapped.join ", "})"
-                    when "over"
+                    when "over", "←"
                         "op_over(#{mapped.join ", "})"
-                    when "on"
+                    when "on", "→"
                         "op_on(#{mapped.join ", "})"
                     when "^"
                         "op_caret(#{mapped.join ", "})"
                     when "if", "unless", "while", "until"
                         expr, cond = mapped
                         "#{expr} #{head.raw} truthy(#{cond})"
-                    when "and"
-                        mapped.join "&&"
-                    when "or"
-                        mapped.join "||"
+                    when "and", "∧"
+                        mapped.map { |e| "truthy(#{e})" }.join "&&"
+                    when "or", "∨"
+                        mapped.map { |e| "truthy(#{e})" }.join "||"
+                    when "not", "¬"
+                        mapped.map { |e| "truthy(#{e})" }.join "&& !"
                     when "="
                         mapped.join "=="
                     when "/="
                         mapped.join "!="
                     when "|"
                         "op_pipeline(#{mapped.join ", "})"
-                    when "in"
+                    when "in", "∈"
                         "op_in(#{mapped.join ", "})"
-                    when "!in"
+                    when "!in", "∉"
                         "!op_in(#{mapped.join ", "})"
                     when "."
                         "op_dot(#{mapped.join ", "})"
-                    when ":="
+                    when ":=", "≔"
                         name, val = tree.children
                         "set_var(#{name.raw.inspect}, #{transpile val})"
-                    when ".="
+                    when ".=", "⩴"
                         name, val = tree.children
                         "set_var_local(#{name.raw.inspect}, #{transpile val})"
                     else
@@ -227,9 +257,11 @@ class Tidy2Ruby < TidyTranspiler
                     when "."
                         "call_func(#{mapped.join ", "})"
                     when "!"
-                        "!truthy(#{mapped.join ", "})"
+                        "fac(#{mapped.join ", "})"
                     when "*"
                         "*(#{mapped.join ", "})"
+                    when "not", "¬"
+                        "!truthy(#{mapped.join ", "})"
                     else
                         raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
                 end
