@@ -779,8 +779,14 @@ tidy_func_def(:rev, &lambda { |arr|
 tidy_func_def(:sum, &lambda { |arg|
     arg.inject(0, :+)
 })
+tidy_func_def(:multisum, &lambda { |*args|
+    sum(args.map { |e| sum e rescue e })
+})
 tidy_func_def(:prod, &lambda { |arg|
     arg.inject(1, :*)
+})
+tidy_func_def(:multiprod, &lambda { |*args|
+    prod(args.map { |e| prod e rescue e })
 })
 tidy_func_def(:diff, &lambda { |arg|
     if arg.size == 1
@@ -790,6 +796,9 @@ tidy_func_def(:diff, &lambda { |arg|
     else
         arg.inject(:-)
     end
+})
+tidy_func_def(:multidiff, &lambda { |*args|
+    diff(args.map { |e| diff e rescue e })
 })
 tidy_curry_def(:base, &lambda { |base, n|
     to_base(base, n)
