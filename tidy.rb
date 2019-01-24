@@ -799,6 +799,12 @@ tidy_func_def(:diff, &lambda { |arg|
     else
         arg.inject(:-)
     end
+}) 
+tidy_func_def(:precedes, &lambda { |a, b|
+    a + 1 == b
+})
+tidy_func_def(:succeeds, &lambda { |a, b|
+    a == b + 1
 })
 tidy_func_def(:multidiff, &lambda { |*args|
     diff(args.map { |e| diff e rescue e })
