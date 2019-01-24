@@ -789,7 +789,10 @@ tidy_func_def(:multiprod, &lambda { |*args|
     prod(args.map { |e| prod e rescue e })
 })
 tidy_func_def(:diff, &lambda { |arg|
-    if arg.size == 1
+    if !arg.respond_to? :size
+        res = arg.inject(:-)
+        res.nil? ? diff(arg.force) : res
+    elsif arg.size == 1
         arg[0]
     elsif arg.size == 0
         0
