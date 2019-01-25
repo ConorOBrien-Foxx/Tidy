@@ -32,6 +32,9 @@ $variables = {
     "nil" => nil,
     "inf" => Infinity,
     "argv" => ARGV,
+    "eps" => 1e-12,
+    "rfac" => 0.1,
+    "rfac2" => 0.01,
 }
 
 def print_enum(enum, separator=", ", max: Infinity, &pr)
@@ -136,7 +139,27 @@ tidy_curry_def(:slices, &lambda { |count, enum|
 })
 tidy_func_def(:fac, &lambda { |a| (1..a).inject(1, :*) })
 tidy_func_def(:sgn, &lambda { |a| a <=> 0 })
-
+tidy_func_def(:approx, &lambda { |a, b|
+    (a - b).abs < $variables["eps"]
+})
+tidy_func_def(:muchless, &lambda { |a, b|
+    a / $variables["rfac"] <= b
+})
+tidy_func_def(:muchmore, &lambda { |a, b|
+    b / $variables["rfac"] <= a
+})
+tidy_func_def(:muchmuchless, &lambda { |a, b|
+    a / $variables["rfac2"] <= b
+})
+tidy_func_def(:muchmuchmore, &lambda { |a, b|
+    b / $variables["rfac2"] <= a
+})
+tidy_func_def(:approxmuchless, &lambda { |a, b|
+    muchless(a, b) || approx(a, b)
+})
+tidy_func_def(:approxmuchmore, &lambda { |a, b|
+    muchmore(a, b) || approx(a, b)
+})
 tidy_func_def(:put, &lambda { |*args|
     args.each { |arg|
         case arg
