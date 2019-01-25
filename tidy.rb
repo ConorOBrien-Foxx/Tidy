@@ -809,6 +809,15 @@ tidy_func_def(:succeeds, &lambda { |a, b|
 tidy_func_def(:multidiff, &lambda { |*args|
     diff(args.map { |e| diff e rescue e })
 })
+tidy_func_def(:sqrt, global: false, &lambda { |a|
+    Math::sqrt a
+})
+tidy_func_def(:cbrt, global: false, &lambda { |a|
+    Math::cbrt a
+})
+tidy_func_def(:nroot, &lambda { |n, a|
+    (BigDecimal.new(a) ** (1.0/n)).to_f rescue a ** (1.0/n)
+})
 tidy_curry_def(:base, &lambda { |base, n|
     to_base(base, n)
 })
