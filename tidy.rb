@@ -32,6 +32,8 @@ $variables = {
     "nil" => nil,
     "inf" => Infinity,
     "argv" => ARGV,
+    "alpha" => tidy_range(Character.new('a'), Character.new('z')),
+    "ALPHA" => tidy_range(Character.new('A'), Character.new('Z')),
 }
 
 def print_enum(enum, separator=", ", max: Infinity, &pr)
@@ -205,7 +207,7 @@ tidy_curry_def(:skip) { |count, enum|
 tidy_curry_def(:take) { |count, enum|
     enum.take(count)
 }
-tidy_func_def(:force) { |enum|
+def force_tidy(enum)
     result = []
     begin
         enum.each { |el|
@@ -215,7 +217,8 @@ tidy_func_def(:force) { |enum|
         result
     end
     result
-}
+end
+$variables["force"] = lambda(&method(:force_tidy))
 tidy_curry_def(:map) { |fn, enum|
     enum.map { |e| fn[e] }
 }
@@ -233,6 +236,9 @@ tidy_func_def(:takeuntil) { |cond, enum|
 }
 tidy_func_def(:dropuntil) { |cond, enum|
     enum.drop_while { |e| not truthy cond[e] }
+}
+tidy_curry_def(:find) { |cond, enum|
+    enum.find { |e| truthy cond[e] }
 }
 tidy_func_def(:tr, &lambda { |list, fill=nil|
     LazyEnumerator.new { |out|
@@ -258,7 +264,7 @@ tidy_func_def(:unite) { |*lists|
         tally = Set[]
         lists.each { |list|
             [*list].each { |el|
-                next if tally.include? el
+                next if tally.any_equal? el
                 tally << el
                 out << el
             }
@@ -284,22 +290,22 @@ tidy_func_def(:intersect) { |*lists|
 
             c.each_with_index { |e, i|
                 # ignore included entries
-                next if tally.include? e
+                next if tally.any_equal? e
 
                 # otherwise, append `i` to `e`s index list
                 candidates[e] << i
-
+                p candidates
                 # if all indices are accounted for
                 if candidates[e].size == size
                     # add it to the tally and update the candidate list
                     out << e
-                    candidates.delete e
+                    candidates.delete_if { |k, v| k == e; break }
                     tally << e
                 end
             }
 
             # if there are any :none values, we can begin redemption
-            break if c.include? :none
+            break if c.any_equal? :none
         }
 
         ## candidate redemption
@@ -307,7 +313,7 @@ tidy_func_def(:intersect) { |*lists|
         invalid = (0...c.size).select { |e| c[e] != :none }
         # remove any members having invalid indices
         candidates.reject! { |e, inds|
-            inds.any? { |i| invalid.include? i }
+            inds.any? { |i| invalid.any_equal? i }
         }
         # remove defaulting behavior
         candidates.default_proc = nil
@@ -318,9 +324,9 @@ tidy_func_def(:intersect) { |*lists|
             break if c.all? :none
 
             c.each_with_index { |e, i|
-                next if tally.include? e
+                next if tally.any_equal? e
 
-                candidates[e] << i if candidates.include? e
+                candidates[e] << i if candidates.any_equal? e
                 # if the candidate exists and is filled
                 if candidates[e]&.size == size
                     out << e
@@ -338,6 +344,9 @@ tidy_func_def(:set_var) { |name, val|
 }
 tidy_func_def(:set_var_local) { |name, val|
     $locals.last[name] = val
+}
+tidy_func_def(:set) { |*vals|
+    Set[*vals]
 }
 tidy_func_def(:get_var) { |name|
     local = $locals.reverse.find { |local| local.has_key? name }
@@ -425,6 +434,16 @@ tidy_func_def(:c) { |*args| args }
 tidy_func_def(:int, &lambda { |n, base=10| n.to_i base rescue n.to_i })
 tidy_func_def(:str, &lambda { |n, *args| n.to_s *args })
 tidy_func_def(:chr) { |a| Character.new a }
+tidy_func_def(:ord) { |a| Character.new(a).ord }
+tidy_curry_def(:rotate, 2, global: false, &lambda { |by, source|
+    if source.respond_to? :rotate
+        source.rotate by
+    elsif String === source
+        tidy_rotate(by, source.chars).join
+    else
+        tidy_rotate(by, source.to_a)
+    end
+})
 tidy_func_def(:first, global: false) { |coll, n=:not_passed|
     if n == :not_passed
         coll.first
@@ -487,12 +506,16 @@ tidy_func_def(:fchunk, global: false) { |list, fn|
 }
 
 tidy_curry_def(:index, global: false) { |a, needle, start=0|
-    found = nil
-    start ||= 0
-    a.drop(start).each_with_index { |e, i|
-        break found = i if e == needle
-    }
-    found
+    if String === a
+        a.index needle.chr
+    else
+        found = nil
+        start ||= 0
+        a.drop(start).each_with_index { |e, i|
+            break found = i if e == needle
+        }
+        found
+    end
 }
 
 define_method(:op_get, &curry(lambda { |source, index|
@@ -503,7 +526,7 @@ define_method(:op_get, &curry(lambda { |source, index|
     else
         if source.respond_to? :[]
             source[index]
-        elsif enum_like? source
+        elsif enum_like[source]
             if index < 0
                 if source.respond_to? :reverse
                     op_get(source.reverse, -index)
@@ -621,7 +644,15 @@ def op_on(pred, source)
     end
 end
 def op_over(qual, source)
-    source.inject(&qual)
+    seed = nil
+    if Array === qual
+        qual, seed = qual
+    end
+    if seed.nil?
+        source.inject(&qual)
+    else
+        source.inject(seed, &qual)
+    end
 end
 
 def __
@@ -673,7 +704,7 @@ def op_pipeline(a, b)
     end
 end
 def op_in(a, b)
-    b.include? a
+    b.any_equal? a
 end
 
 $variables["primes"] = op_from(-> x { Prime.prime? x }, $variables["N"])

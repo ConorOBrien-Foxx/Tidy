@@ -23,9 +23,25 @@ class Character
         chr
     end
 
-    [:+, :-, :/, :*].each { |k|
+    def hash
+        inspect.hash
+    end
+
+    def eql?(c)
+        Character === c && self == c
+    end
+
+    [:+, :-, :/, :*, :%, :&, :|, :^, :**].each { |k|
         define_method(k) { |n|
             Character.new @val.send k, n.to_i
+        }
+    }
+
+    [:<=, :<, :>, :>=, :==, :!=, :<=>].each { |k|
+        define_method(k) { |n|
+            n = n.ord if String === n
+            n = n.to_i rescue n
+            to_i.send k, n
         }
     }
 end
@@ -43,6 +59,10 @@ module Enumerable
         }
     end
 
+    def any_equal?(to)
+        any? { |e| to == e }
+    end
+
     def skip(n)
         unless block_given?
             return to_enum(__method__, n) {
@@ -58,6 +78,8 @@ module Enumerable
 
     alias :* :tile
     alias :/ :skip
+
+    alias :force :to_a
 end
 
 # https://stackoverflow.com/a/16052401/4119004
@@ -74,10 +96,6 @@ module LazyEnumerable
 
     def [](n)
         take(n + 1).force[n]
-    end
-
-    def force
-      to_a
     end
 
     make_lazy *(Enumerable.public_instance_methods - [:lazy])
