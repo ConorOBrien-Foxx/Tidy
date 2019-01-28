@@ -38,12 +38,12 @@ class Tidy2Ruby < TidyTranspiler
         "≠" => "!=",
     }
     RUBY_UNARY_OPERATORS = ["-", "~"]
-    
+
     def initialize(code)
         super(code)
         @depth = 0
     end
-    
+
     def compile_leaf(leaf)
         if leaf.type == :number
             # TODO: expand
@@ -98,7 +98,7 @@ class Tidy2Ruby < TidyTranspiler
             @depth += 1
             indent = " " * 4 * @depth
             sub = " " * 4 * (@depth + 1)
-            
+
             # determine if abnormal
             raw = leaf.raw
             op = if TidyTokenizer::OP_QUOTE_SPECIAL_REGEX === raw
@@ -128,7 +128,7 @@ class Tidy2Ruby < TidyTranspiler
             rescue NoOperatorException
                 binary = nil
             end
-            
+
             res = ""
             if unary && binary && op != "*"
                 res += preindent + "lambda { |x, y=:unpassed|\n"
@@ -142,7 +142,7 @@ class Tidy2Ruby < TidyTranspiler
                 res += indent + "end\n"
                 res += indent + "local_ascend\n"
                 res += indent + "result\n"
-                res += preindent + "}\n"
+                res += preindent + "}"
             elsif binary
                 res += preindent + "lambda { |x, y|\n"
                 res += indent + "local_descend\n"
@@ -151,7 +151,7 @@ class Tidy2Ruby < TidyTranspiler
                 res += indent + "result = #{binary}\n"
                 res += indent + "local_ascend\n"
                 res += indent + "result\n"
-                res += preindent + "}\n"
+                res += preindent + "}"
             elsif unary
                 res += preindent + "lambda { |x|\n"
                 res += indent + "local_descend\n"
@@ -159,13 +159,13 @@ class Tidy2Ruby < TidyTranspiler
                 res += indent + "result = #{unary}\n"
                 res += indent + "local_ascend\n"
                 res += indent + "result\n"
-                res += preindent + "}\n"
+                res += preindent + "}"
             else
                 raise "operator #{op} does not exist"
             end
-            
+
             @depth -= 1
-            
+
             res
         else
             STDERR.puts "unhandled leaf type #{leaf.type}"
@@ -359,31 +359,31 @@ class Tidy2Ruby < TidyTranspiler
                 end
                 res = ""
                 nested = !@depth.zero?
-                
+
                 if nested
                     res += "mylocal = local_save\n"
                 end
-                
+
                 preindent = " " * 4 * @depth
                 @depth += 1
                 indent = " " * 4 * @depth
-                
+
                 res += "#{preindent}lambda { |#{args}|\n"
                 res += "#{indent}local_adopt mylocal\n" if nested
                 res += "#{indent}local_descend\n"
                 params.each { |param|
                     res += "#{indent}set_var_local(#{param.inspect}, #{param})\n"
                 }
-                
+
                 body.each_with_index { |sub_tree, i|
                     res += "#{indent}"
                     res += "result = " if i + 1 == body.size
                     res += transpile sub_tree
                     res += "\n"
                 }
-                
+
                 @depth -= 1
-                
+
                 res += "#{indent}local_ascend\n"
                 res += "#{indent}local_evict\n" if nested
                 res += "#{indent}result\n"

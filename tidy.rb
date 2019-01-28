@@ -114,13 +114,13 @@ def eval_tidy(code)
 end
 $variables["eval"] = lambda(&method(:eval_tidy))
 
-tidy_func_def(:show, &lambda { |enum, max=Infinity|
+tidy_func_def(:show, &lambda { |enum, limit=Infinity|
     print "["
-    print_enum(enum, max: max) { |e| put e }
+    print_enum(enum, max: limit) { |e| put e }
     print "]"
 })
-tidy_func_def(:showln, &lambda { |enum, max=Infinity|
-    show enum, max
+tidy_func_def(:showln, &lambda { |enum, limit=Infinity|
+    show enum, limit
     puts
 })
 
