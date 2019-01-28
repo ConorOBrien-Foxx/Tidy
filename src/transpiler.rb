@@ -240,6 +240,8 @@ class Tidy2Ruby < TidyTranspiler
                         "!op_in(#{mapped.join ", "})"
                     when "."
                         "op_dot(#{mapped.join ", "})"
+                    when "=~", "≈"
+                        "approx(#{mapped.join ", "})"
                     when "<<", "≪"
                         "muchless(#{mapped.join ", "})"
                     when "<<<", "⫷"

@@ -94,6 +94,8 @@ Returns if `a` is approximately equal to `b`; `abs(a - b) < eps`.
 p3 := 3 * 0.1f
 out(p3)                 ? 0.30000000000000004
 out(approx(p3, 0.3))    ? true
+out(p3 =~ 0.3)          ? true
+out(p3 ≈ 0.3)           ? true
 eps := 1e-20
 out(approx(p3, 0.3))    ? false
 eps := 2
