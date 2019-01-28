@@ -2,6 +2,8 @@
 
 Tidy is a language made for the ["**Range**" Language Design Challenge](https://chat.stackexchange.com/transcript/message/46169592#46169592).
 
+## [list of available functions](./functions.md)
+
 ## What is a range?
 
 I define a range as an iterable, possibly infinite sequence of numbers, with some sort of start and end point. I will use the following notation to talk about ranges:
@@ -28,3 +30,5 @@ out(count(divisors) = 0)
 ```
 
 Let's decompose this. `[2, n[`.
+
+(sorry for incomplete tutorial)
