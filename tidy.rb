@@ -245,7 +245,8 @@ tidy_curry_def(:skip, &lambda { |count, enum|
 
 tidy_curry_def(:take, &lambda { |count, enum|
     enum.take(count)
-}
+})
+
 def force_tidy(enum)
     result = []
     begin
@@ -256,7 +257,7 @@ def force_tidy(enum)
         result
     end
     result
-})
+end
 $variables["force"] = lambda(&method(:force_tidy))
 
 tidy_curry_def(:map, &lambda { |fn, enum|
