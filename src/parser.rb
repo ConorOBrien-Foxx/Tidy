@@ -100,7 +100,7 @@ class TidyTokenizer
         TidyTokenizer.number_separator? c
     end
     def self.number_separator?(c)
-        ["b", "e", "."].include? c
+        ["b", "e", ".", "-"].include? c
     end
     def self.number_terminator?(c)
         ["r", "i", "f"].include? c
