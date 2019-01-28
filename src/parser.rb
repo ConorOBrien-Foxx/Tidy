@@ -22,6 +22,10 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
         of_type? :blank
     end
 
+    def comment?
+        of_type? :comment
+    end
+
     def data_start?
         data? || of_type?(:range_open, :block_open)
     end
@@ -113,7 +117,7 @@ class TidyTokenizer
     def operator?
         has_ahead? OPERATOR_REGEX
     end
-    
+
     OP_SPECIALS = {
         "⊕" => "+",
         "⊖" => "-",
@@ -139,6 +143,16 @@ class TidyTokenizer
     PATTERN_STRING = /[A-Za-z]?`([^`]|``)*`/
     def pattern_string?
         has_ahead? PATTERN_STRING
+    end
+
+    SINGLE_COMMENT = /\?.*\r?(\n|$)/
+    def single_comment?
+        has_ahead? SINGLE_COMMENT
+    end
+
+    MULTI_COMMENT = /\?\?\?[\s\S]*\?\?\?/
+    def multi_comment?
+        has_ahead? MULTI_COMMENT
     end
 
     def read_token
@@ -169,6 +183,10 @@ class TidyTokenizer
             end
         elsif op_quote?
             res.type = :op_quote
+            res.raw = @match
+            advance @match.size
+        elsif multi_comment? || single_comment?
+            res.type = :comment
             res.raw = @match
             advance @match.size
         elsif string?

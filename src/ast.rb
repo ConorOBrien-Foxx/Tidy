@@ -105,7 +105,7 @@ def shunt(code)
                 end
                 operator_stack << token
 
-            elsif token.blank?
+            elsif token.blank? || token.comment?
                 # pass
 
             else
