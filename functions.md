@@ -1,3 +1,20 @@
+# `approx(a, b)`
+
+Returns if `a` is approximately equal to `b`; `abs(a - b) < eps`.
+
+```
+p3 := 3 * 0.1f
+out(p3)                 ? 0.30000000000000004
+out(approx(p3, 0.3))    ? true
+out(p3 =~ 0.3)          ? true
+out(p3 ≈ 0.3)           ? true
+eps := 1e-20
+out(approx(p3, 0.3))    ? false
+eps := 2
+out(approx(3, 4))       ? true
+out(approx(3, 5))       ? false
+```
+
 # `curry(fn, arity=fn.arity)`
 
 Returns a function which takes `arity` curried parameters.
@@ -9,19 +26,14 @@ add5 := curriedAdd(5)
 out(add5(7))                ? 12
 ```
 
-# `show(enum, limit=Infinity)`
+# `fac(a)`
 
-Displays the entries in `enum`, up to `limit` entries.
+Factorial; product of all numbers from `1` to `a`.
 
 ```
-show([1, 5])    ? [1, 2, 3, 4, 5]
-show(N, 5)      ? [1, 2, 3, 4, 5, ...]
-show(N)         ? outputs [1, 2, 3, 4, 5, 6, 7, 8, 9, etc.
+out(fac(5))     ? 120
+out(!5)         ? 120
 ```
-
-# `showln(enum, limit=Infinity)`
-
-Equivalent to `show(enum, limit); out()`. That is, `show` followed by a newline.
 
 # `recur(*seeds, fn, slice=1)`
 
@@ -57,24 +69,6 @@ out(fibonacci)
 ? [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ...]
 ```
 
-# `slices(count, enum)` (curries)
-
-Divides `enum` into overlapping windows of size `count`.
-
-```
-showln(slices(2, N), 5)
-? [[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], ...]
-```
-
-# `fac(a)`
-
-Factorial; product of all numbers from `1` to `a`.
-
-```
-out(fac(5))     ? 120
-out(!5)         ? 120
-```
-
 # `sgn(a)`
 
 Returns the sign of `a`; `0` if `a = 0`, `1` if `a > 0`, and `-1` if `a < 0`.
@@ -86,19 +80,25 @@ out(sgn(-32))       ? -1
 out(sgn(3.1415f))   ? 1
 ```
 
-# `approx(a, b)`
+# `show(enum, limit=Infinity)`
 
-Returns if `a` is approximately equal to `b`; `abs(a - b) < eps`.
+Displays the entries in `enum`, up to `limit` entries.
 
 ```
-p3 := 3 * 0.1f
-out(p3)                 ? 0.30000000000000004
-out(approx(p3, 0.3))    ? true
-out(p3 =~ 0.3)          ? true
-out(p3 ≈ 0.3)           ? true
-eps := 1e-20
-out(approx(p3, 0.3))    ? false
-eps := 2
-out(approx(3, 4))       ? true
-out(approx(3, 5))       ? false
+show([1, 5])    ? [1, 2, 3, 4, 5]
+show(N, 5)      ? [1, 2, 3, 4, 5, ...]
+show(N)         ? outputs [1, 2, 3, 4, 5, 6, 7, 8, 9, etc.
+```
+
+# `showln(enum, limit=Infinity)`
+
+Equivalent to `show(enum, limit); out()`. That is, `show` followed by a newline.
+
+# `slices(count, enum)` (curries)
+
+Divides `enum` into overlapping windows of size `count`.
+
+```
+showln(slices(2, N), 5)
+? [[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], ...]
 ```
