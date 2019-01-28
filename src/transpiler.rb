@@ -32,7 +32,18 @@ end
 
 class Tidy2Ruby < TidyTranspiler
     RUBY_OPERATORS = ["*", "+", "/", "-", "%", "<", ">", "<=", ">="]
+    RUBY_OPERATOR_ALIASES = {
+        "≥" => ">=",
+        "≤" => "<=",
+        "≠" => "!=",
+    }
     RUBY_UNARY_OPERATORS = ["-", "~"]
+    
+    def initialize(code)
+        super(code)
+        @depth = 0
+    end
+    
     def compile_leaf(leaf)
         if leaf.type == :number
             # TODO: expand
@@ -83,7 +94,18 @@ class Tidy2Ruby < TidyTranspiler
             end
             res
         elsif leaf.type == :op_quote
-            op = leaf.raw.match(/\((.+)\)/)[1].strip
+            preindent = " " * 4 * @depth
+            @depth += 1
+            indent = " " * 4 * @depth
+            sub = " " * 4 * (@depth + 1)
+            
+            # determine if abnormal
+            raw = leaf.raw
+            op = if TidyTokenizer::OP_QUOTE_SPECIAL_REGEX === raw
+                TidyTokenizer::OP_SPECIALS[raw]
+            else
+                leaf.raw.match(/\((.+)\)/)[1].strip
+            end
             begin
                 unary = transpile ASTNode.new(
                     TidyToken.new(op, :unary_operator),
@@ -106,35 +128,45 @@ class Tidy2Ruby < TidyTranspiler
             rescue NoOperatorException
                 binary = nil
             end
+            
+            res = ""
             if unary && binary && op != "*"
-                "lambda { |x, y=:unpassed|
-                    local_descend
-                    set_var_local(\"x\", x)
-                    if y == :unpassed
-                        #{unary}
-                    else
-                        set_var_local(\"y\", y)
-                        #{binary}
-                    end
-                    local_ascend
-                }"
+                res += preindent + "lambda { |x, y=:unpassed|\n"
+                res += indent + "local_descend\n"
+                res += indent + "set_var_local(\"x\", x)\n"
+                res += indent + "result = if y == :unpassed\n"
+                res += sub    + unary + "\n"
+                res += indent + "else\n"
+                res += sub    + "set_var_local(\"y\", y)\n"
+                res += sub    + binary + "\n"
+                res += indent + "end\n"
+                res += indent + "local_ascend\n"
+                res += indent + "result\n"
+                res += preindent + "}\n"
             elsif binary
-                "lambda { |x, y|
-                    local_descend
-                    set_var_local(\"x\", x)
-                    set_var_local(\"y\", y)
-                    #{binary}
-                }"
+                res += preindent + "lambda { |x, y|\n"
+                res += indent + "local_descend\n"
+                res += indent + "set_var_local(\"x\", x)\n"
+                res += indent + "set_var_local(\"y\", y)\n"
+                res += indent + "result = #{binary}\n"
+                res += indent + "local_ascend\n"
+                res += indent + "result\n"
+                res += preindent + "}\n"
             elsif unary
-                "lambda { |x|
-                    local_descend
-                    set_var_local(\"x\", x)
-                    #{unary}
-                    local_ascend
-                }"
+                res += preindent + "lambda { |x|\n"
+                res += indent + "local_descend\n"
+                res += indent + "set_var_local(\"x\", x)\n"
+                res += indent + "result = #{unary}\n"
+                res += indent + "local_ascend\n"
+                res += indent + "result\n"
+                res += preindent + "}\n"
             else
                 raise "operator #{op} does not exist"
             end
+            
+            @depth -= 1
+            
+            res
         else
             STDERR.puts "unhandled leaf type #{leaf.type}"
         end
@@ -157,45 +189,81 @@ class Tidy2Ruby < TidyTranspiler
                 case head.raw
                     when *RUBY_OPERATORS
                         mapped.join head.raw
+                    when *RUBY_OPERATOR_ALIASES.keys
+                        mapped.join RUBY_OPERATOR_ALIASES[head.raw]
                     when "//"
                         "op_slashslash(#{mapped.join ", "})"
                     when "@"
                         "op_get(#{mapped.join ", "})"
                     when "&"
                         "op_bind(#{mapped.join ", "})"
-                    when "from"
+                    when "from", "↦"
                         "op_from(#{mapped.join ", "})"
-                    when "over"
+                    when "over", "←"
                         "op_over(#{mapped.join ", "})"
-                    when "on"
+                    when "on", "→"
                         "op_on(#{mapped.join ", "})"
+                    when "onto", "⇴"
+                        "force(op_on(#{mapped.join ", "}))"
                     when "^"
                         "op_caret(#{mapped.join ", "})"
                     when "if", "unless", "while", "until"
                         expr, cond = mapped
                         "#{expr} #{head.raw} truthy(#{cond})"
-                    when "and"
-                        mapped.join "&&"
-                    when "or"
-                        mapped.join "||"
+                    when "and", "∧"
+                        mapped.map { |e| "truthy(#{e})" }.join "&&"
+                    when "or", "∨"
+                        mapped.map { |e| "truthy(#{e})" }.join "||"
+                    when "not", "¬"
+                        mapped.map { |e| "truthy(#{e})" }.join "&& !"
                     when "="
                         mapped.join "=="
                     when "/="
                         mapped.join "!="
+                    when "<_", "≺"
+                        "precedes(#{mapped.join ", "})"
+                    when "_>", "≻"
+                        "succeeds(#{mapped.join ", "})"
+                    when "⊡"
+                        "tidy_join(#{mapped.reverse.join ", "})"
+                    when "⊞", "∑"
+                        "multisum(#{mapped.join ", "})"
+                    when "⊟"
+                        "multidiff(#{mapped.join ", "})"
+                    when "⊠", "∏"
+                        "multiprod(#{mapped.join ", "})"
                     when "|"
                         "op_pipeline(#{mapped.join ", "})"
-                    when "in"
+                    when "in", "∈"
                         "op_in(#{mapped.join ", "})"
-                    when "!in"
+                    when "!in", "∉"
                         "!op_in(#{mapped.join ", "})"
                     when "."
                         "op_dot(#{mapped.join ", "})"
-                    when ":="
+                    when "<<", "≪"
+                        "muchless(#{mapped.join ", "})"
+                    when "<<<", "⫷"
+                        "muchmuchless(#{mapped.join ", "})"
+                    when "<~", "≳"
+                        "approxmuchless(#{mapped.join ", "})"
+                    when ">>", "≫"
+                        "muchmore(#{mapped.join ", "})"
+                    when ">~", "≳"
+                        "approxmuchmore(#{mapped.join ", "})"
+                    when ">>>", "⫸"
+                        "muchmuchmore(#{mapped.join ", "})"
+                    when "↑"
+                        "get_var('UP')[#{mapped.join ", "}]"
+                    when "↓"
+                        "get_var('DOWN')[#{mapped.join ", "}]"
+                    when ":=", "≔"
                         name, val = tree.children
                         "set_var(#{name.raw.inspect}, #{transpile val})"
-                    when ".="
+                    when ".=", "⩴"
                         name, val = tree.children
                         "set_var_local(#{name.raw.inspect}, #{transpile val})"
+                    when "√", "./"
+                        "nroot(#{mapped.join ", "})"
                     else
                         raise NoOperatorException.new("no such binary op #{head.raw.inspect}")
                 end
@@ -216,14 +284,32 @@ class Tidy2Ruby < TidyTranspiler
                         "#{head.raw}#{mapped.join}"
                     when "@"
                         "op_get(#{mapped.join ", "})"
+                    when "√", "./"
+                        "tidy_sqrt(#{mapped.join ", "})"
+                    when "∛"
+                        "tidy_cbrt(#{mapped.join ", "})"
+                    when "↑"
+                        "get_var('UP')[#{mapped.join ", "}]"
+                    when "↓"
+                        "get_var('DOWN')[#{mapped.join ", "}]"
                     when "~"
                         "op_tilde(#{mapped.join})"
                     when "."
                         "call_func(#{mapped.join ", "})"
                     when "!"
-                        "!truthy(#{mapped.join ", "})"
+                        "fac(#{mapped.join ", "})"
                     when "*"
                         "*(#{mapped.join ", "})"
+                    when "not", "¬"
+                        "!truthy(#{mapped.join ", "})"
+                    when "⊞", "∑"
+                        "sum(#{mapped.join ", "})"
+                    when "⊟"
+                        "diff(#{mapped.join ", "})"
+                    when "⊠", "∏"
+                        "prod(#{mapped.join ", "})"
+                    when "⊡"
+                        "tidy_join(#{mapped.join ", "})"
                     else
                         raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
                 end
@@ -271,20 +357,37 @@ class Tidy2Ruby < TidyTranspiler
                 else
                     params.join(", ") + ", *discard"
                 end
-                res = "lambda { |#{args}|\n"
-                res += "    local_descend\n"
+                res = ""
+                nested = !@depth.zero?
+                
+                if nested
+                    res += "mylocal = local_save\n"
+                end
+                
+                preindent = " " * 4 * @depth
+                @depth += 1
+                indent = " " * 4 * @depth
+                
+                res += "#{preindent}lambda { |#{args}|\n"
+                res += "#{indent}local_adopt mylocal\n" if nested
+                res += "#{indent}local_descend\n"
                 params.each { |param|
-                    res += "    set_var_local(#{param.inspect}, #{param})\n"
+                    res += "#{indent}set_var_local(#{param.inspect}, #{param})\n"
                 }
+                
                 body.each_with_index { |sub_tree, i|
-                    res += "    "
+                    res += "#{indent}"
                     res += "result = " if i + 1 == body.size
                     res += transpile sub_tree
                     res += "\n"
                 }
-                res += "    local_ascend\n"
-                res += "    result\n"
-                res += "}"
+                
+                @depth -= 1
+                
+                res += "#{indent}local_ascend\n"
+                res += "#{indent}local_evict\n" if nested
+                res += "#{indent}result\n"
+                res += "#{preindent}}"
 
             else
                 raise "unhandled head #{head}"

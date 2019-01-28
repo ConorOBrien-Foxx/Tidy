@@ -48,6 +48,9 @@ class TidyTokenizer
 
     def initialize(code)
         @code = code
+        if @code.nil?
+            raise "`TidyTokenizer` @code cannot be nil"
+        end
         @pos = 0
         @queue = []
         @line = 1
@@ -110,8 +113,20 @@ class TidyTokenizer
     def operator?
         has_ahead? OPERATOR_REGEX
     end
-
-    OP_QUOTE_REGEX = /\((\s*#{OPERATOR_REGEX}\s*)+\)/
+    
+    OP_SPECIALS = {
+        "⊕" => "+",
+        "⊖" => "-",
+        "⊗" => nil,     #times
+        "⊘" => "/",
+        "⊙" => ".",
+        "⊚" => nil,     #ring
+        "⊛" => "*",
+        "⊜" => "==",
+        "⊝" => nil,     #dash
+    }
+    OP_QUOTE_SPECIAL_REGEX = /[\u2295-\u229D]/
+    OP_QUOTE_REGEX = /\((\s*(#{OPERATOR_REGEX})\s*)+\)|#{OP_QUOTE_SPECIAL_REGEX}/
     def op_quote?
         has_ahead? OP_QUOTE_REGEX
     end
