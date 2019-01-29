@@ -39,12 +39,12 @@ class Character
 
     [:<=, :<, :>, :>=, :==, :!=, :<=>].each { |k|
         define_method(k) { |n|
-            if n.size == 1
+            if String === n && n.size != 1
+                false
+            else
                 n = n.ord if String === n
                 n = n.to_i rescue n
                 to_i.send k, n
-            else
-                false
             end
         }
     }
