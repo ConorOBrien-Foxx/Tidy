@@ -1,3 +1,18 @@
+# `append(source, *vals)`
+
+Modifies the value of `source` such that each value in `vals` is appended to the end sequentially.
+
+```
+thing := c(4, 9, 2)
+out(thing)                      ? [4, 9, 2]
+
+append(thing, "foo")
+out(thing)                      ? [4, 9, 2, "foo"]
+
+append(thing, 3, 9, "bar")
+out(thing)                      ? [4, 9, 2, "foo", 3, 9, "bar"]
+```
+
 # `approx(a, b)`
 
 Returns if `a` is approximately equal to `b`; `abs(a - b) < eps`.
@@ -7,7 +22,7 @@ p3 := 3 * 0.1f
 out(p3)                 ? 0.30000000000000004
 out(approx(p3, 0.3))    ? true
 out(p3 =~ 0.3)          ? true
-out(p3 â‰ˆ 0.3)           ? true
+out(p3 ≈ 0.3)           ? true
 eps := 1e-20
 out(approx(p3, 0.3))    ? false
 eps := 2
@@ -119,6 +134,10 @@ muchmuchless(50, 1)     ? true
 
 Calls `put(arg)` for each `arg` in `args`, separated by spaces, and followed by a trailing newline.
 
+# `prompt(display, hist=true)`
+
+Prompts the user for keyboard input, displaying the string `display`. `hist` determines whether or not the user's past inputs are allowed to be accessed.
+
 # `put(*args)`
 
 Outputs each element `arg` in `args`, depending on the type:
@@ -126,6 +145,10 @@ Outputs each element `arg` in `args`, depending on the type:
  - `enum_like` - `show(arg, 12)`
  - `File` - `File(arg's path)`
  - `other` - the default representation of `arg`
+
+# `readln([input])`
+
+Reads a line of input from `input`, or `STDIN` if not provided.
 
 # `recur(*seeds, fn, slice=1)`
 
@@ -215,3 +238,15 @@ truthy(0.0)
 truthy(chr(0))
 truthy(false)
 ```
+
+# `repr(el)`
+
+Returns the representation of `el`, usually in terms of how to programmatically generate the argument.
+
+# `write([output, ]*args)`
+
+Writes `args` joined by an empty string to `output`, or, if the first argument is not an IO object, to `STDOUT`.
+
+# `writeln(*args)`
+
+Equivalent to `write(args); out()`.

@@ -192,13 +192,15 @@ tidy_func_def(:repr, &lambda { |el|
     case el
         when String
             '"' + el.gsub(/"/, '""') + '"'
+        when Array
+            "c(#{el.join ", "})"
         else
             el.inspect
     end
 })
 
-tidy_func_def(:prompt, &lambda { |prompt, hist=true|
-    Readline.readline(prompt, hist)
+tidy_func_def(:prompt, &lambda { |display, hist=true|
+    Readline.readline(display, hist)
 })
 
 tidy_func_def(:write, &lambda { |*args|
