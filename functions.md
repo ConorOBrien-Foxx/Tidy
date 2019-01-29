@@ -7,7 +7,7 @@ p3 := 3 * 0.1f
 out(p3)                 ? 0.30000000000000004
 out(approx(p3, 0.3))    ? true
 out(p3 =~ 0.3)          ? true
-out(p3 ≈ 0.3)           ? true
+out(p3 â‰ˆ 0.3)           ? true
 eps := 1e-20
 out(approx(p3, 0.3))    ? false
 eps := 2
@@ -33,6 +33,61 @@ Factorial; product of all numbers from `1` to `a`.
 ```
 out(fac(5))     ? 120
 out(!5)         ? 120
+```
+
+# `muchless(a, b)`
+
+Tests whether or not a is much less than b (a ≪ b); `a <= rfac * b`. `rfac` is `0.1` by default.
+
+```
+muchless(1, 10)         ? true
+1 << 10                 ? true
+1 ≪ 10                  ? true
+muchless(1, 9)          ? false
+rfac := 0.5
+muchless(1, 9)          ? true
+1 <= 9 * rfac           ? true
+```
+
+# `muchmore(a, b)`
+
+Tests whether or not a is much more than b (a ≫ b); `a * rfac >= b`. `rfac` is `0.1` by default.
+
+```
+muchmore(10, 1)         ? true
+10 >> 1                 ? true
+1 ≫ 10                  ? true
+muchmore(9, 1)          ? false
+rfac := 0.5
+muchmore(9, 1)          ? true
+9 * rfac >= 1           ? true
+```
+
+# `muchmuchless(a, b)`
+
+Tests whether or not a is much, _much_ less than b (a ⫷ b); `a <= rfac2 * b`. `rfac2` is `0.01` by defualt.
+
+```
+muchmuchless(1, 100)    ? true
+1 <<< 100               ? true
+1 ⫷ 100                 ? true
+muchmuchless(1, 50)     ? false
+rfac2 := 0.02
+muchmuchless(1, 50)     ? true
+```
+
+
+# `muchmuchmore(a, b)`
+
+Tests whether or not a is much, _much_ less than b (a ⫸ b); `a * rfac2 >= b`. `rfac2` is `0.01` by defualt.
+
+```
+muchmuchless(100, 1)    ? true
+100 >>> 1               ? true
+100 ⫸ 1                 ? true
+muchmuchless(50, 1)     ? false
+rfac2 := 0.02
+muchmuchless(50, 1)     ? true
 ```
 
 # `recur(*seeds, fn, slice=1)`
