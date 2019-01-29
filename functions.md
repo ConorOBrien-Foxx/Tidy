@@ -15,6 +15,31 @@ out(approx(3, 4))       ? true
 out(approx(3, 5))       ? false
 ```
 
+# `approxmuchless(a, b)`
+
+Returns if a is much less than b, or approximately there. `a <= rfac * b || approx(a, rfac * b)`.
+
+```
+p := 3 * 0.1f
+muchless(p, 3)          ? false
+approxmuchless(p, 3)    ? true
+p <~ 3                  ? true
+p ≲ 3                   ? true
+```
+
+
+# `approxmuchmore(a, b)`
+
+Returns if a is much more than b, or approximately there. `a * rfac >= b || approx(a * rfac, b)`.
+
+```
+p := 3 * 0.1f
+muchmore(3, p)          ? false
+approxmuchmore(3, p)    ? true
+3 >~ p                  ? true
+3 ≳ p                   ? true
+```
+
 # `curry(fn, arity=fn.arity)`
 
 Returns a function which takes `arity` curried parameters.

@@ -157,10 +157,10 @@ tidy_func_def(:muchmuchmore, &lambda { |a, b|
     b / $variables["rfac2"] <= a
 })
 tidy_func_def(:approxmuchless, &lambda { |a, b|
-    muchless(a, b) || approx(a, b)
+    muchless(a, b) || approx(a / $variables["rfac"], b)
 })
 tidy_func_def(:approxmuchmore, &lambda { |a, b|
-    muchmore(a, b) || approx(a, b)
+    muchmore(a, b) || approx(a, b / $variables["rfac"])
 })
 tidy_func_def(:put, &lambda { |*args|
     args.each { |arg|
