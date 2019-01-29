@@ -247,7 +247,7 @@ class Tidy2Ruby < TidyTranspiler
                         "muchless(#{joined})"
                     when "<<<", "⫷"
                         "muchmuchless(#{joined})"
-                    when "<~", "≳"
+                    when "<~", "≲"
                         "approxmuchless(#{joined})"
                     when ">>", "≫"
                         "muchmore(#{joined})"
