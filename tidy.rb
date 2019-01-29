@@ -188,6 +188,15 @@ tidy_func_def(:truthy, &lambda { |el|
     el != 0 && el && true
 })
 
+tidy_func_def(:repr, &lambda { |el|
+    case el
+        when String
+            '"' + el.gsub(/"/, '""') + '"'
+        else
+            el.inspect
+    end
+})
+
 tidy_func_def(:prompt, &lambda { |prompt, hist=true|
     Readline.readline(prompt, hist)
 })
