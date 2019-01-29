@@ -162,6 +162,8 @@ tidy_func_def(:approxmuchless, &lambda { |a, b|
 tidy_func_def(:approxmuchmore, &lambda { |a, b|
     muchmore(a, b) || approx(a, b / $variables["rfac"])
 })
+
+# docs end here
 tidy_func_def(:put, &lambda { |*args|
     args.each { |arg|
         case arg
