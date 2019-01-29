@@ -115,6 +115,18 @@ rfac2 := 0.02
 muchmuchless(50, 1)     ? true
 ```
 
+# `out(*args)`
+
+Calls `put(arg)` for each `arg` in `args`, separated by spaces, and followed by a trailing newline.
+
+# `put(*args)`
+
+Outputs each element `arg` in `args`, depending on the type:
+
+ - `enum_like` - `show(arg, 12)`
+ - `File` - `File(arg's path)`
+ - `other` - the default representation of `arg`
+
 # `recur(*seeds, fn, slice=1)`
 
 Yields a recursively-generated list by using successive windows of size `slice`. The resulting list starts out with each element in `seeds`, then with successive iterations of `fn` over the previous `slice` members. Here are some symbolic examples:
