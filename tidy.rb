@@ -185,7 +185,7 @@ tidy_func_def(:out, &lambda { |*args|
 })
 
 tidy_func_def(:truthy, &lambda { |el|
-    el != 0 && el
+    el != 0 && el && true
 })
 
 tidy_func_def(:prompt, &lambda { |prompt, hist=true|

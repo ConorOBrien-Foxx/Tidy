@@ -194,3 +194,24 @@ Divides `enum` into overlapping windows of size `count`.
 showln(slices(2, N), 5)
 ? [[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], ...]
 ```
+
+# `truthy(el)`
+
+Returns `true` if `el` is not `false`, `0` or `chr(0)`, `false` otherwise.
+
+```
+? all of the following return `true`
+truthy(1)
+truthy(2)
+truthy("0")
+truthy(chr(1))
+truthy('0)
+truthy(0.1)
+truthy(true)
+
+? ...and all of the following return `false`
+truthy(0)
+truthy(0.0)
+truthy(chr(0))
+truthy(false)
+```
