@@ -70,6 +70,18 @@ add5 := curriedAdd(5)
 out(add5(7))                ? 12
 ```
 
+# `cycle(enum[, amount])`
+
+Repeats `enum` by `amount` times, or infinitely if `amount` is unpassed.
+
+```
+arr := c(1, 3, 9)
+out(cycle(arr))             ? [1, 3, 9, 1, 3, 9, 1, 3, 9, 1, 3, 9, ...]
+out(cycle(arr, 2))          ? [1, 3, 9, 1, 3, 9]
+out(cycle(arr, 0))          ? []
+ones := cycle(c(1))         ? [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...]
+```
+
 # `fac(a)`
 
 Factorial; product of all numbers from `1` to `a`.
@@ -77,6 +89,32 @@ Factorial; product of all numbers from `1` to `a`.
 ```
 out(fac(5))     ? 120
 out(!5)         ? 120
+```
+
+# `force(enum)`
+
+Coerces `enum` to a list.
+
+```
+[1, 15]                 ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, ...]
+force([1, 15])          ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+```
+
+# `gets(object=STDIN)`
+
+Same as `readln(object)`.
+
+# `map(fn, enum)` (curries)
+
+Maps the function `fn` over each element in `enum`.
+
+```
+map(
+    { x : x * x },
+    c(1, 2, 3)
+)                           ? [1, 4, 9]
+
+map(c, force([1, 9]))       ? [[1], [2], [3], [4], [5], [6], [7], [8], [9]]
 ```
 
 # `muchless(a, b)`
@@ -141,6 +179,20 @@ Equivalent to ruby's `File.open(file_name, *opts)`.
 # `out(*args)`
 
 Calls `put(arg)` for each `arg` in `args`, separated by spaces, and followed by a trailing newline.
+
+# `prime(n)`
+
+Returns `true` if `n` is prime, `false` otherwise.
+
+```
+prime(9)        ? false
+prime(7)        ? true
+prime(6)        ? false
+prime(2)        ? true
+prime(1)        ? false
+prime(0)        ? false
+prime(-1)       ? false
+```
 
 # `prompt(display, hist=true)`
 
@@ -217,6 +269,18 @@ show(N)         ? outputs [1, 2, 3, 4, 5, 6, 7, 8, 9, etc.
 
 Equivalent to `show(enum, limit); out()`. That is, `show` followed by a newline.
 
+# `skip(count, enum)` (curries)
+
+Returns every `count`-th element in `enum`, starting with the first.
+
+```
+skip(2, N)          ? [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, ...]
+skip(3, N)          ? [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, ...]
+skip10 := skip(10)
+
+skip10(N)           ? [1, 11, 21, 31, 41, 51, 61, 71, 81, 91, 101, 111, ...]
+```
+
 # `slices(count, enum)` (curries)
 
 Divides `enum` into overlapping windows of size `count`.
@@ -224,6 +288,37 @@ Divides `enum` into overlapping windows of size `count`.
 ```
 showln(slices(2, N), 5)
 ? [[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], ...]
+```
+
+# `slurp(object=STDIN)`
+
+Reads and returns the remaining content in `object`.
+
+# `take(count, enum)` (curries)
+
+Returns the first `count` elements of `enum`, up to the amount of elements in `enum`.
+
+```
+take(5, N)              ? [1, 2, 3, 4, 5]
+take(5, c(1, 2, 3))     ? [1, 2, 3]
+
+first_two := take(2)
+
+first_two(N)            ? [1, 2]
+first_two(]93, 5, 105]) ? [98, 103]
+first_two(c())          ? []
+```
+
+# `tile(amount, enum)` (curries)
+
+Repeats each element in `enum` by `amount`.
+
+```
+tile(2, [1, 3])             ? [1, 1, 2, 2, 3, 3]
+tile(0, [1, 3])             ? []
+thricer := tile(3)
+
+thricer(c("hi", "there"))   ? ["hi", "hi", "hi", "there", "there", "there"]
 ```
 
 # `truthy(el)`

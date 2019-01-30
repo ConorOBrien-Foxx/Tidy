@@ -102,9 +102,10 @@ $variables["range"] = curry(lambda(&method(:tidy_range)), 2)
 
 def tidy_curry_def(name, arity=nil, global: true, &block)
     name = name.to_s
+    arity ||= block.arity
     key = global ? name : "tidy_#{name}"
     $FUNCTION_ALIASES[name] = key
-    define_method key, &curry(block, arity || block.arity)
+    define_method key, &curry(block, arity)
 end
 
 def eval_tidy(code)
@@ -237,10 +238,6 @@ tidy_func_def(:gets, &lambda { |object=STDIN|
 
 tidy_func_def(:slurp, &lambda { |object=STDIN|
     object.read
-})
-
-tidy_func_def(:close, &lambda { |file_object|
-    file_object.close
 })
 
 tidy_func_def(:cycle, &lambda { |enum, amount=nil|
