@@ -166,10 +166,10 @@ tidy_func_def(:approxmuchmore, &lambda { |a, b|
 tidy_func_def(:put, &lambda { |*args|
     args.each { |arg|
         case arg
-            when enum_like
-                show arg, 12
             when File
                 print "File(#{arg.path})"
+            when enum_like
+                show arg, 12
             else
                 print arg.inspect
         end

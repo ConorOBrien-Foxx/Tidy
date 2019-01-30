@@ -55,6 +55,10 @@ approxmuchmore(3, p)    ? true
 3 ≳ p                   ? true
 ```
 
+# `close(file_object)`
+
+Closes the file, making the object unable to be written to/read from.
+
 # `curry(fn, arity=fn.arity)`
 
 Returns a function which takes `arity` curried parameters.
@@ -129,6 +133,10 @@ muchmuchless(50, 1)     ? false
 rfac2 := 0.02
 muchmuchless(50, 1)     ? true
 ```
+
+# `open(file_name, *opts)`
+
+Equivalent to ruby's `File.open(file_name, *opts)`.
 
 # `out(*args)`
 
