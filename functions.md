@@ -185,6 +185,7 @@ Calls `put(arg)` for each `arg` in `args`, separated by spaces, and followed by 
 Returns `true` if `n` is prime, `false` otherwise.
 
 ```
+prime(2^31-1)   ? true
 prime(9)        ? false
 prime(7)        ? true
 prime(6)        ? false

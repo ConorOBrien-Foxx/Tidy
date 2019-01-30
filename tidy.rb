@@ -277,21 +277,23 @@ tidy_func_def(:prime, &lambda { |n|
     Prime.prime? n
 })
 
-tidy_func_def(:takewhile, &lambda { |cond, enum|
+# documentation ends here
+tidy_curry_def(:takewhile, &lambda { |cond, enum|
     enum.take_while { |e| truthy cond[e] }
 })
 
-tidy_func_def(:dropwhile, &lambda { |cond, enum|
+tidy_curry_def(:dropwhile, &lambda { |cond, enum|
     enum.drop_while { |e| truthy cond[e] }
 })
 
-tidy_func_def(:takeuntil, &lambda { |cond, enum|
+tidy_curry_def(:takeuntil, &lambda { |cond, enum|
     enum.take_while { |e| not truthy cond[e] }
 })
 
-tidy_func_def(:dropuntil, &lambda { |cond, enum|
+tidy_curry_def(:dropuntil, &lambda { |cond, enum|
     enum.drop_while { |e| not truthy cond[e] }
 })
+
 tidy_curry_def(:find, &lambda { |cond, enum|
     enum.find { |e| truthy cond[e] }
 })
