@@ -102,9 +102,10 @@ $variables["range"] = curry(lambda(&method(:tidy_range)), 2)
 
 def tidy_curry_def(name, arity=nil, global: true, &block)
     name = name.to_s
+    arity ||= block.arity
     key = global ? name : "tidy_#{name}"
     $FUNCTION_ALIASES[name] = key
-    define_method key, &curry(block, arity || block.arity)
+    define_method key, &curry(block, arity)
 end
 
 def eval_tidy(code)
@@ -163,14 +164,13 @@ tidy_func_def(:approxmuchmore, &lambda { |a, b|
     muchmore(a, b) || approx(a, b / $variables["rfac"])
 })
 
-# docs end here
 tidy_func_def(:put, &lambda { |*args|
     args.each { |arg|
         case arg
-            when enum_like
-                show arg, 12
             when File
                 print "File(#{arg.path})"
+            when enum_like
+                show arg, 12
             else
                 print arg.inspect
         end
@@ -178,19 +178,30 @@ tidy_func_def(:put, &lambda { |*args|
 })
 
 tidy_func_def(:out, &lambda { |*args|
-    args.each { |arg|
+    args.each_with_index { |arg, i|
         put arg
-        print " "
+        print " " unless i + 1 == args.size
     }
     puts
 })
 
 tidy_func_def(:truthy, &lambda { |el|
-    el != 0 && el
+    el != 0 && el && true
 })
 
-tidy_func_def(:prompt, &lambda { |prompt, hist=true|
-    Readline.readline(prompt, hist)
+tidy_func_def(:repr, &lambda { |el|
+    case el
+        when String
+            '"' + el.gsub(/"/, '""') + '"'
+        when Array
+            "c(#{el.join ", "})"
+        else
+            el.inspect
+    end
+})
+
+tidy_func_def(:prompt, &lambda { |display, hist=true|
+    Readline.readline(display, hist)
 })
 
 tidy_func_def(:write, &lambda { |*args|
@@ -227,10 +238,6 @@ tidy_func_def(:gets, &lambda { |object=STDIN|
 
 tidy_func_def(:slurp, &lambda { |object=STDIN|
     object.read
-})
-
-tidy_func_def(:close, &lambda { |file_object|
-    file_object.close
 })
 
 tidy_func_def(:cycle, &lambda { |enum, amount=nil|
@@ -270,21 +277,23 @@ tidy_func_def(:prime, &lambda { |n|
     Prime.prime? n
 })
 
-tidy_func_def(:takewhile, &lambda { |cond, enum|
+# documentation ends here
+tidy_curry_def(:takewhile, &lambda { |cond, enum|
     enum.take_while { |e| truthy cond[e] }
 })
 
-tidy_func_def(:dropwhile, &lambda { |cond, enum|
+tidy_curry_def(:dropwhile, &lambda { |cond, enum|
     enum.drop_while { |e| truthy cond[e] }
 })
 
-tidy_func_def(:takeuntil, &lambda { |cond, enum|
+tidy_curry_def(:takeuntil, &lambda { |cond, enum|
     enum.take_while { |e| not truthy cond[e] }
 })
 
-tidy_func_def(:dropuntil, &lambda { |cond, enum|
+tidy_curry_def(:dropuntil, &lambda { |cond, enum|
     enum.drop_while { |e| not truthy cond[e] }
 })
+
 tidy_curry_def(:find, &lambda { |cond, enum|
     enum.find { |e| truthy cond[e] }
 })

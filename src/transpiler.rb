@@ -366,7 +366,9 @@ class Tidy2Ruby < TidyTranspiler
                 nested = !@depth.zero?
 
                 if nested
-                    res += "mylocal = local_save\n"
+                    @depth += 1
+                    res += "(\n#{" " * 4 * @depth}"
+                    res += "mylocal = local_save;\n"
                 end
 
                 preindent = " " * 4 * @depth
@@ -387,12 +389,21 @@ class Tidy2Ruby < TidyTranspiler
                     res += "\n"
                 }
 
-                @depth -= 1
-
+                if nested
+                    @depth -= 2
+                else
+                    @depth -= 1
+                end
                 res += "#{indent}local_ascend\n"
                 res += "#{indent}local_evict\n" if nested
                 res += "#{indent}result\n"
                 res += "#{preindent}}"
+
+                if nested
+                    res += ")"
+                end
+
+                res
 
             else
                 raise "unhandled head #{head}"
