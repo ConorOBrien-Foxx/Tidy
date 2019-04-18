@@ -44,6 +44,15 @@ class Tidy2Ruby < TidyTranspiler
         @depth = 0
     end
 
+    RESERVED = %w(if case when break unless end while until)
+    def fix_varname(name)
+        if RESERVED.include?(name) || name[0] == "_"
+            "_#{name}"
+        else
+            name
+        end
+    end
+
     def compile_leaf(leaf)
         if leaf.type == :number
             # TODO: expand
@@ -77,13 +86,7 @@ class Tidy2Ruby < TidyTranspiler
         elsif leaf.type == :infinity
             Infinity
         elsif leaf.type == :word
-            raw = leaf.raw
-            inner = if RESERVED.include? raw
-                "__#{raw}"
-            else
-                raw
-            end
-            "get_var(#{inner.inspect})"
+            "get_var(#{fix_varname(leaf.raw).inspect})"
         elsif leaf.type == :string
             inner = leaf.raw
                 .gsub(/""/, '"')[1..-2]
@@ -178,7 +181,6 @@ class Tidy2Ruby < TidyTranspiler
         end
     end
 
-    RESERVED = %w(if case when break unless end while until)
     def transpile_astnode(tree)
         head = tree.head
         comp = transpile(head)
@@ -268,10 +270,10 @@ class Tidy2Ruby < TidyTranspiler
                 "get_var('DOWN')[#{joined}]"
             when ":=", "≔"
                 name, val = tree.children
-                "set_var(#{name.raw.inspect}, #{transpile val})"
+                "set_var(#{fix_varname(name.raw).inspect}, #{transpile val})"
             when ".=", "⩴"
                 name, val = tree.children
-                "set_var_local(#{name.raw.inspect}, #{transpile val})"
+                "set_var_local(#{fix_varname(name.raw).inspect}, #{transpile val})"
             when "√", "./"
                 "nroot(#{joined})"
             when "$"
@@ -375,11 +377,7 @@ class Tidy2Ruby < TidyTranspiler
         params, body = tree.children
         params = params.children.map &:raw rescue []
         params.map! { |param|
-            if RESERVED.include? param
-                "__#{param}"
-            else
-                param
-            end
+            fix_varname param
         }
         args = if params.empty?
             "*discard"
