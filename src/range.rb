@@ -151,8 +151,18 @@ class TidyRange < LazyEnumerator
         end
     end
 
-    def first
-        @lower
+    def first(n = nil)
+        if n.nil?
+            point = @lower
+            if @exclude_lower
+                point += @step
+            end
+            point
+        elsif n == 0
+            []
+        else
+            (0...n).map { |e| self.[](e) }
+        end
     end
 
     def min
@@ -162,9 +172,27 @@ class TidyRange < LazyEnumerator
     def max
         @step < 0 ? first : last
     end
+    
+    def size
+        (last - first) / @step + 1
+    end
+    alias :length :size
 
-    def last
-        @upper - (@upper - @lower) % @step
+    def last(n = nil)
+        if n.nil?
+            point = @upper - (@upper - @lower) % @step
+            if @exclude_upper
+                point -= @step
+            end
+            if point < first
+                point = first - @step
+            end
+            point
+        elsif n == 0
+            []
+        else
+            (size - n...size).map { |e| self.[](e) }
+        end
     end
 
     def [](n)
