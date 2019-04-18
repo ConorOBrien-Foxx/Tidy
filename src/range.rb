@@ -153,11 +153,15 @@ class TidyRange < LazyEnumerator
 
     def first(n = nil)
         if n.nil?
-            point = @lower
-            if @exclude_lower
-                point += @step
+            if @lower.infinite?
+                @lower
+            else
+                point = @lower
+                if @exclude_lower
+                    point += @step
+                end
+                point
             end
-            point
         elsif n == 0
             []
         else
@@ -166,28 +170,36 @@ class TidyRange < LazyEnumerator
     end
 
     def min
-        @step < 0 ? last : first
+        @step.negative? ? last : first
     end
 
     def max
-        @step < 0 ? first : last
+        @step.negative? ? first : last
     end
     
     def size
-        (last - first) / @step + 1
+        if first.infinite? || last.infinite?
+            Infinity
+        else
+            (last - first) / @step + 1
+        end
     end
     alias :length :size
 
     def last(n = nil)
         if n.nil?
-            point = @upper - (@upper - @lower) % @step
-            if @exclude_upper
-                point -= @step
+            if @upper.infinite?
+                @upper
+            else
+                point = @upper - (@upper - @lower) % @step
+                if @exclude_upper
+                    point -= @step
+                end
+                if point < first
+                    point = first - @step
+                end
+                point
             end
-            if point < first
-                point = first - @step
-            end
-            point
         elsif n == 0
             []
         else
