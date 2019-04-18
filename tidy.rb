@@ -114,6 +114,15 @@ def eval_tidy(code)
     eval result
 end
 $variables["eval"] = lambda(&method(:eval_tidy))
+tidy_func_def(:evalsafe, &lambda { |str|
+    begin
+        eval_tidy str
+    rescue SystemExit => e
+        raise e
+    rescue Exception => e
+        e
+    end
+})
 
 tidy_func_def(:show, &lambda { |enum, limit=Infinity|
     print "["
@@ -463,7 +472,7 @@ tidy_func_def(:int, global: false, &lambda { |e, *args|
 tidy_func_def(:count, global: false, &lambda { |a, e=:not_passed|
     if e == :not_passed
         if a.respond_to? :size
-            a.size    
+            a.size
         else
             case a
                 when Array, String
