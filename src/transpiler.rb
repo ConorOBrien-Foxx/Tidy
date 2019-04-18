@@ -171,7 +171,8 @@ class Tidy2Ruby < TidyTranspiler
             STDERR.puts "unhandled leaf type #{leaf.type}"
         end
     end
-
+    
+    RESERVED = %w(if case when break unless end while until)
     def transpile(tree)
         if ASTNode === tree
             head = tree.head
