@@ -75,7 +75,20 @@ module Enumerable
             yield *args if count.next == 1
         }
     end
-
+    
+    # TODO: add parameter version
+    def flatten
+        Enumerator.new { |out|
+            each { |e|
+                if e.respond_to? :flatten
+                    e.flatten.each { |child| out << e }
+                else
+                    out << e
+                end
+            }
+        }
+    end
+    
     alias :* :tile
     alias :/ :skip
     alias :+ :each_cons

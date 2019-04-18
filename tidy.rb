@@ -668,10 +668,23 @@ tidy_func_def(:ints, &lambda { |*sh|
     res
 })
 
-tidy_func_def(:shape, &lambda { |sh, dat|
+tidy_curry_def(:cellmap, &lambda { |fn, enum|
+    enum.map { |child|
+        if enum_like[child]
+            cellmap fn, child
+        else
+            fn[child]
+        end
+    }
+})
+
+tidy_curry_def(:shape, &lambda { |sh, dat|
     shape = [*sh]
-    data = dat.flatten
-    
+    data = (enum_like[dat] ? dat.flatten : [*dat]).cycle
+    indices = ints(shape)
+    cellmap(lambda { |i|
+        data.next
+    }, ints(shape))
 })
 
 def call_func(fn, *args)
