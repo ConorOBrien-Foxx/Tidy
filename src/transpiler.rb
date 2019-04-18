@@ -77,7 +77,13 @@ class Tidy2Ruby < TidyTranspiler
         elsif leaf.type == :infinity
             Infinity
         elsif leaf.type == :word
-            "get_var(#{leaf.raw.inspect})"
+            raw = leaf.raw
+            inner = if RESERVED.include? raw
+                "__#{raw}"
+            else
+                raw
+            end
+            "get_var(#{inner.inspect})"
         elsif leaf.type == :string
             inner = leaf.raw
                 .gsub(/""/, '"')[1..-2]
@@ -171,240 +177,282 @@ class Tidy2Ruby < TidyTranspiler
             STDERR.puts "unhandled leaf type #{leaf.type}"
         end
     end
-    
+
     RESERVED = %w(if case when break unless end while until)
+    def transpile_astnode(tree)
+        head = tree.head
+        comp = transpile(head)
+        mapped = tree.children.map { |child|
+            "#{transpile child}"
+        }
+        "call_func(#{comp}, #{mapped.join ", "})"
+    end
+
+    def transpile_operator(tree)
+        head = tree.head
+        mapped = tree.children.map { |child|
+            "(#{transpile child})"
+        }
+        joined = mapped.join ", "
+        case head.raw
+            when *RUBY_OPERATORS
+                mapped.join head.raw
+            when *RUBY_OPERATOR_ALIASES.keys
+                mapped.join RUBY_OPERATOR_ALIASES[head.raw]
+            when "//"
+                "op_slashslash(#{joined})"
+            when "@"
+                "op_get(#{joined})"
+            when "&"
+                "op_bind(#{joined})"
+            when "from", "↦"
+                "op_from(#{joined})"
+            when "over", "←"
+                "op_over(#{joined})"
+            when "on", "→"
+                "op_on(#{joined})"
+            when "onto", "⇴"
+                "force(op_on(#{joined}))"
+            when "^"
+                "op_caret(#{joined})"
+            when "if", "unless", "while", "until"
+                expr, cond = mapped
+                "#{expr} #{head.raw} truthy(#{cond})"
+            when "and", "∧"
+                mapped.map { |e| "truthy(#{e})" }.join "&&"
+            when "or", "∨"
+                mapped.map { |e| "truthy(#{e})" }.join "||"
+            when "not", "¬"
+                mapped.map { |e| "truthy(#{e})" }.join "&& !"
+            when "="
+                mapped.join "=="
+            when "/="
+                mapped.join "!="
+            when "<_", "≺"
+                "precedes(#{joined})"
+            when "_>", "≻"
+                "succeeds(#{joined})"
+            when "⊡"
+                "tidy_join(#{mapped.reverse.join ", "})"
+            when "⊞", "∑"
+                "multisum(#{joined})"
+            when "⊟"
+                "multidiff(#{joined})"
+            when "⊠", "∏"
+                "multiprod(#{joined})"
+            when "|"
+                "op_pipeline(#{joined})"
+            when "in", "∈"
+                "op_in(#{joined})"
+            when "!in", "∉"
+                "!op_in(#{joined})"
+            when "."
+                "op_dot(#{joined})"
+            when "=~", "≈"
+                "approx(#{joined})"
+            when "<<", "≪"
+                "muchless(#{joined})"
+            when "<<<", "⫷"
+                "muchmuchless(#{joined})"
+            when "<~", "≲"
+                "approxmuchless(#{joined})"
+            when ">>", "≫"
+                "muchmore(#{joined})"
+            when ">~", "≳"
+                "approxmuchmore(#{joined})"
+            when ">>>", "⫸"
+                "muchmuchmore(#{joined})"
+            when "↑"
+                "get_var('UP')[#{joined}]"
+            when "↓"
+                "get_var('DOWN')[#{joined}]"
+            when ":=", "≔"
+                name, val = tree.children
+                "set_var(#{name.raw.inspect}, #{transpile val})"
+            when ".=", "⩴"
+                name, val = tree.children
+                "set_var_local(#{name.raw.inspect}, #{transpile val})"
+            when "√", "./"
+                "nroot(#{joined})"
+            when "$"
+                "shape(#{joined})"
+            else
+                raise NoOperatorException.new("no such binary op #{head.raw.inspect}")
+        end
+    end
+
+    def transpile_opquote(tree)
+        head = tree.head
+        mapped = tree.children.map { |child|
+            "#{transpile child}"
+        }
+        fn = compile_leaf head
+        "#{fn}[#{mapped.join ", "}]"
+    end
+
+    def transpile_unaryoperator(tree)
+        head = tree.head
+        mapped = tree.children.map { |child|
+            "#{transpile child}"
+        }
+        case head.raw
+            when *RUBY_UNARY_OPERATORS
+                "#{head.raw}#{mapped.join}"
+            when "@"
+                "op_get(#{mapped.join ", "})"
+            when "√", "./"
+                "tidy_sqrt(#{mapped.join ", "})"
+            when "∛"
+                "tidy_cbrt(#{mapped.join ", "})"
+            when "↑"
+                "get_var('UP')[#{mapped.join ", "}]"
+            when "↓"
+                "get_var('DOWN')[#{mapped.join ", "}]"
+            when "~"
+                "op_tilde(#{mapped.join})"
+            when "."
+                "call_func(#{mapped.join ", "})"
+            when "!"
+                "fac(#{mapped.join ", "})"
+            when "*"
+                "*(#{mapped.join ", "})"
+            when "not", "¬"
+                "!truthy(#{mapped.join ", "})"
+            when "⊞", "∑"
+                "sum(#{mapped.join ", "})"
+            when "⊟"
+                "diff(#{mapped.join ", "})"
+            when "⊠", "∏"
+                "prod(#{mapped.join ", "})"
+            when "⊡"
+                "tidy_join(#{mapped.join ", "})"
+            else
+                raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
+        end
+    end
+
+    def transpile_assignrange(tree)
+        head = tree.head
+        mapped = tree.children.map { |child|
+            "#{transpile child}"
+        }
+        exclude_lower = head.raw[0] == "]"
+        exclude_upper = head.raw[1] == "["
+        case mapped.size
+            when 1
+                raise "singleton ranges don't exist"
+            when 2
+                a, b = mapped
+                "tidy_range(#{a}, #{b}, 1, #{exclude_lower}, #{exclude_upper})"
+            when 3
+                a, s, b = mapped
+                "tidy_range(#{a}, #{b}, #{s}, #{exclude_lower}, #{exclude_upper})"
+            else
+                raise "no range case for #{mapped.size}"
+        end
+    end
+
+    def transpile_word(tree)
+        head = tree.head
+        mapped = tree.children.map { |child|
+            "#{transpile child}"
+        }
+        name = head.raw
+        case name
+            when "break"
+                "raise TidyStopIteration if #{mapped.map{|e|"(#{e})"}.join "&&"}"
+            when "Q"
+                a, b, c = mapped.map { |e| "(#{e})" }
+                c ||= "nil"
+                "(#{a} ? #{b} : #{c})"
+            else
+                "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
+        end
+    end
+
+    def transpile_block(tree)
+        head = tree.head
+        params, body = tree.children
+        params = params.children.map &:raw rescue []
+        params.map! { |param|
+            if RESERVED.include? param
+                "__#{param}"
+            else
+                param
+            end
+        }
+        args = if params.empty?
+            "*discard"
+        else
+            params.join(", ") + ", *discard"
+        end
+        res = ""
+        nested = !@depth.zero?
+
+        if nested
+            @depth += 1
+            res += "(\n#{" " * 4 * @depth}"
+            res += "mylocal = local_save;\n"
+        end
+
+        preindent = " " * 4 * @depth
+        @depth += 1
+        indent = " " * 4 * @depth
+
+        res += "#{preindent}lambda { |#{args}|\n"
+        res += "#{indent}local_adopt mylocal\n" if nested
+        res += "#{indent}local_descend\n"
+        params.each { |param|
+            res += "#{indent}set_var_local(#{param.inspect}, #{param})\n"
+        }
+
+        body.each_with_index { |sub_tree, i|
+            res += "#{indent}"
+            res += "result = " if i + 1 == body.size
+            res += transpile sub_tree
+            res += "\n"
+        }
+
+        if nested
+            @depth -= 2
+        else
+            @depth -= 1
+        end
+        res += "#{indent}local_ascend\n"
+        res += "#{indent}local_evict\n" if nested
+        res += "#{indent}result\n"
+        res += "#{preindent}}"
+
+        if nested
+            res += ")"
+        end
+
+        res
+    end
+
     def transpile(tree)
         if ASTNode === tree
             head = tree.head
             if ASTNode === head
-                comp = transpile(head)
-                mapped = tree.children.map { |child|
-                    "#{transpile child}"
-                }
-                "call_func(#{comp}, #{mapped.join ", "})"
+                transpile_astnode tree
 
             elsif head.type == :operator
-                mapped = tree.children.map { |child|
-                    "(#{transpile child})"
-                }
-                joined = mapped.join ", "
-                case head.raw
-                    when *RUBY_OPERATORS
-                        mapped.join head.raw
-                    when *RUBY_OPERATOR_ALIASES.keys
-                        mapped.join RUBY_OPERATOR_ALIASES[head.raw]
-                    when "//"
-                        "op_slashslash(#{joined})"
-                    when "@"
-                        "op_get(#{joined})"
-                    when "&"
-                        "op_bind(#{joined})"
-                    when "from", "↦"
-                        "op_from(#{joined})"
-                    when "over", "←"
-                        "op_over(#{joined})"
-                    when "on", "→"
-                        "op_on(#{joined})"
-                    when "onto", "⇴"
-                        "force(op_on(#{joined}))"
-                    when "^"
-                        "op_caret(#{joined})"
-                    when "if", "unless", "while", "until"
-                        expr, cond = mapped
-                        "#{expr} #{head.raw} truthy(#{cond})"
-                    when "and", "∧"
-                        mapped.map { |e| "truthy(#{e})" }.join "&&"
-                    when "or", "∨"
-                        mapped.map { |e| "truthy(#{e})" }.join "||"
-                    when "not", "¬"
-                        mapped.map { |e| "truthy(#{e})" }.join "&& !"
-                    when "="
-                        mapped.join "=="
-                    when "/="
-                        mapped.join "!="
-                    when "<_", "≺"
-                        "precedes(#{joined})"
-                    when "_>", "≻"
-                        "succeeds(#{joined})"
-                    when "⊡"
-                        "tidy_join(#{mapped.reverse.join ", "})"
-                    when "⊞", "∑"
-                        "multisum(#{joined})"
-                    when "⊟"
-                        "multidiff(#{joined})"
-                    when "⊠", "∏"
-                        "multiprod(#{joined})"
-                    when "|"
-                        "op_pipeline(#{joined})"
-                    when "in", "∈"
-                        "op_in(#{joined})"
-                    when "!in", "∉"
-                        "!op_in(#{joined})"
-                    when "."
-                        "op_dot(#{joined})"
-                    when "=~", "≈"
-                        "approx(#{joined})"
-                    when "<<", "≪"
-                        "muchless(#{joined})"
-                    when "<<<", "⫷"
-                        "muchmuchless(#{joined})"
-                    when "<~", "≲"
-                        "approxmuchless(#{joined})"
-                    when ">>", "≫"
-                        "muchmore(#{joined})"
-                    when ">~", "≳"
-                        "approxmuchmore(#{joined})"
-                    when ">>>", "⫸"
-                        "muchmuchmore(#{joined})"
-                    when "↑"
-                        "get_var('UP')[#{joined}]"
-                    when "↓"
-                        "get_var('DOWN')[#{joined}]"
-                    when ":=", "≔"
-                        name, val = tree.children
-                        "set_var(#{name.raw.inspect}, #{transpile val})"
-                    when ".=", "⩴"
-                        name, val = tree.children
-                        "set_var_local(#{name.raw.inspect}, #{transpile val})"
-                    when "√", "./"
-                        "nroot(#{joined})"
-                    when "$"
-                        "shape(#{joined})"
-                    else
-                        raise NoOperatorException.new("no such binary op #{head.raw.inspect}")
-                end
+                transpile_operator tree
 
             elsif head.type == :op_quote
-                mapped = tree.children.map { |child|
-                    "#{transpile child}"
-                }
-                fn = compile_leaf head
-                "#{fn}[#{mapped.join ", "}]"
+                transpile_opquote tree
 
             elsif head.type == :unary_operator
-                mapped = tree.children.map { |child|
-                    "#{transpile child}"
-                }
-                case head.raw
-                    when *RUBY_UNARY_OPERATORS
-                        "#{head.raw}#{mapped.join}"
-                    when "@"
-                        "op_get(#{mapped.join ", "})"
-                    when "√", "./"
-                        "tidy_sqrt(#{mapped.join ", "})"
-                    when "∛"
-                        "tidy_cbrt(#{mapped.join ", "})"
-                    when "↑"
-                        "get_var('UP')[#{mapped.join ", "}]"
-                    when "↓"
-                        "get_var('DOWN')[#{mapped.join ", "}]"
-                    when "~"
-                        "op_tilde(#{mapped.join})"
-                    when "."
-                        "call_func(#{mapped.join ", "})"
-                    when "!"
-                        "fac(#{mapped.join ", "})"
-                    when "*"
-                        "*(#{mapped.join ", "})"
-                    when "not", "¬"
-                        "!truthy(#{mapped.join ", "})"
-                    when "⊞", "∑"
-                        "sum(#{mapped.join ", "})"
-                    when "⊟"
-                        "diff(#{mapped.join ", "})"
-                    when "⊠", "∏"
-                        "prod(#{mapped.join ", "})"
-                    when "⊡"
-                        "tidy_join(#{mapped.join ", "})"
-                    else
-                        raise NoOperatorException.new("no such unary op #{head.raw.inspect}")
-                end
+                transpile_unaryoperator tree
 
             elsif head.type == :assign_range
-                mapped = tree.children.map { |child|
-                    "#{transpile child}"
-                }
-                exclude_lower = head.raw[0] == "]"
-                exclude_upper = head.raw[1] == "["
-                case mapped.size
-                    when 1
-                        raise "singleton ranges don't exist"
-                    when 2
-                        a, b = mapped
-                        "tidy_range(#{a}, #{b}, 1, #{exclude_lower}, #{exclude_upper})"
-                    when 3
-                        a, s, b = mapped
-                        "tidy_range(#{a}, #{b}, #{s}, #{exclude_lower}, #{exclude_upper})"
-                    else
-                        raise "no range case for #{mapped.size}"
-                end
+                transpile_assignrange tree
 
             elsif head.type == :word
-                mapped = tree.children.map { |child|
-                    "#{transpile child}"
-                }
-                name = head.raw
-                case name
-                    when "break"
-                        "raise TidyStopIteration if #{mapped.map{|e|"(#{e})"}.join "&&"}"
-                    when "Q"
-                        a, b, c = mapped.map { |e| "(#{e})" }
-                        c ||= "nil"
-                        "(#{a} ? #{b} : #{c})"
-                    else
-                        "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
-                end
+                transpile_word tree
 
             elsif head.type == :make_block
-                params, body = tree.children
-                params = params.children.map &:raw rescue []
-                args = if params.empty?
-                    "*discard"
-                else
-                    params.join(", ") + ", *discard"
-                end
-                res = ""
-                nested = !@depth.zero?
-
-                if nested
-                    @depth += 1
-                    res += "(\n#{" " * 4 * @depth}"
-                    res += "mylocal = local_save;\n"
-                end
-
-                preindent = " " * 4 * @depth
-                @depth += 1
-                indent = " " * 4 * @depth
-
-                res += "#{preindent}lambda { |#{args}|\n"
-                res += "#{indent}local_adopt mylocal\n" if nested
-                res += "#{indent}local_descend\n"
-                params.each { |param|
-                    res += "#{indent}set_var_local(#{param.inspect}, #{param})\n"
-                }
-
-                body.each_with_index { |sub_tree, i|
-                    res += "#{indent}"
-                    res += "result = " if i + 1 == body.size
-                    res += transpile sub_tree
-                    res += "\n"
-                }
-
-                if nested
-                    @depth -= 2
-                else
-                    @depth -= 1
-                end
-                res += "#{indent}local_ascend\n"
-                res += "#{indent}local_evict\n" if nested
-                res += "#{indent}result\n"
-                res += "#{preindent}}"
-
-                if nested
-                    res += ")"
-                end
-
-                res
+                transpile_block tree
 
             else
                 raise "unhandled head #{head}"
