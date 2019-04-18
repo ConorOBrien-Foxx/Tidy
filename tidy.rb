@@ -678,6 +678,14 @@ tidy_curry_def(:cellmap, &lambda { |fn, enum|
     }
 })
 
+tidy_func_def(:flat, global: false, &lambda { |enum, n = :not_passed|
+    if n == :not_passed
+        enum.flatten
+    else
+        enum.flatten n
+    end
+})
+
 tidy_curry_def(:shape, &lambda { |sh, dat|
     shape = [*sh]
     data = (enum_like[dat] ? dat.flatten : [*dat]).cycle
