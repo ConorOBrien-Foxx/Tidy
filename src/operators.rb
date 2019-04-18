@@ -63,6 +63,8 @@ module Operators
         "→"         => [20, :right],
         "onto"      => [20, :right],
         "⇴"         => [20, :right],
+        
+        "$"         => [25, :right],
 
         "."         => [30, :left],
         "⊡"         => [30, :left],

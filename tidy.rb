@@ -559,11 +559,12 @@ def op_dot(a, b)
 end
 
 tidy_curry_def(:chunk, &lambda { |a, b|
-    a, b = a.to_enum, b.to_enum
+    as = (Numeric === a ? [*a] : a).to_enum.cycle
+    bs = b.to_enum
     LazyEnumerator.new { |out|
         loop {
             begin
-                slice_count = a.next
+                slice_count = as.next
             rescue StopIteration
                 break
             end
@@ -571,10 +572,10 @@ tidy_curry_def(:chunk, &lambda { |a, b|
             build = []
             begin
                 slice_count.times {
-                    build << b.next
+                    build << bs.next
                 }
-            rescue
-                out << build
+            rescue Exception => e
+                out << build unless build.empty?
                 break
             end
             out << build
@@ -652,6 +653,25 @@ tidy_func_def(:join, global: false, &lambda { |a, b=""|
 tidy_func_def(:split, global: false, &lambda { |a, b=/\s+/|
     a = a.force if enum_like[a]
     a.split b
+})
+
+tidy_func_def(:ints, &lambda { |*sh|
+    args = sh.flat_map { |e| e }
+    size = prod args
+    iter = args[1..-1]
+    res = (0...size).to_a
+
+    until iter.empty?
+        res = chunk iter.pop, res
+    end
+
+    res
+})
+
+tidy_func_def(:shape, &lambda { |sh, dat|
+    shape = [*sh]
+    data = dat.flatten
+    
 })
 
 def call_func(fn, *args)

@@ -267,6 +267,8 @@ class Tidy2Ruby < TidyTranspiler
                         "set_var_local(#{name.raw.inspect}, #{transpile val})"
                     when "√", "./"
                         "nroot(#{joined})"
+                    when "$"
+                        "shape(#{joined})"
                     else
                         raise NoOperatorException.new("no such binary op #{head.raw.inspect}")
                 end
