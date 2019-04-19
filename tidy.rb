@@ -435,6 +435,12 @@ tidy_func_def(:get_var, &lambda { |name|
     end
 })
 
+tidy_func_def(:loop, global: false, &lambda { |fn|
+    loop {
+        fn.call
+    }
+})
+
 $locals_list = []
 def local_adopt(new_local)
     $locals_list << $locals

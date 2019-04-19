@@ -1,7 +1,7 @@
-force({
+loop({
     line .= prompt("> ")
     res .= evalsafe(line)
     if(res /= nil,
         out(res)
     )
-} on N)
+})
