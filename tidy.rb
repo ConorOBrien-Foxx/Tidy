@@ -970,6 +970,23 @@ tidy_func_def(:load, global: false, &lambda { |file_name|
     eval t2r.to_a.join("\n")
 })
 
+tidy_func_def(:all, global: false, &lambda { |fn, *enum|
+    args = enum.flatten(1)
+    if args.empty?
+        fn.all?
+    else
+        args.all? { |e| fn[e] }
+    end
+})
+
+tidy_func_def(:any, global: false, &lambda { |fn, *enum|
+    args = enum.flatten(1)
+    if args.empty?
+        fn.any?
+    else
+        args.any? { |e| fn[e] }
+    end
+})
 # pattern string functions
 
 tidy_func_def(:pt_w, &lambda { |str|

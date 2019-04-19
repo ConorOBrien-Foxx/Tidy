@@ -39,7 +39,7 @@ TidyToken = Struct.new(:raw, :type, :start, :line, :col) {
     end
 
     def significant?
-        ![:blank].include?(type)
+        !(blank? || comment?)
     end
 
     def self.atom(atom)

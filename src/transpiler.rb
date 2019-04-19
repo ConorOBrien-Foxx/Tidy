@@ -6,6 +6,7 @@ class TidyTranspiler
     HEADER = []
     def initialize(code)
         @trees = ast code
+        p @trees
     end
 
     def code
@@ -277,6 +278,7 @@ class Tidy2Ruby < TidyTranspiler
                 "get_var('DOWN')[#{joined}]"
             when ":=", "≔"
                 name, val = tree.children
+                # p tree.children
                 "set_var(#{fix_varname(name.raw).inspect}, #{transpile val})"
             when ".=", "⩴"
                 name, val = tree.children
