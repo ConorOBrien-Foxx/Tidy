@@ -1,10 +1,10 @@
 module Operators
     PRECEDENCE_ASSOCIATIVITY = {
-        "while"     => [2, :left],
-        "until"     => [2, :left],
-
-        "unless"    => [3, :left],
-        "if"        => [3, :left],
+        # "while"     => [2, :left],
+        # "until"     => [2, :left],
+        #
+        # "unless"    => [3, :left],
+        # "if"        => [3, :left],
 
         "!"         => [4, :left],
 

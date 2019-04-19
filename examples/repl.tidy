@@ -1,5 +1,7 @@
 force({
     line .= prompt("> ")
     res .= evalsafe(line)
-    out(res) if res /= nil
+    if(res /= nil,
+        out(res)
+    )
 } on N)

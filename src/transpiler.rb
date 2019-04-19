@@ -44,7 +44,7 @@ class Tidy2Ruby < TidyTranspiler
         @depth = 0
     end
 
-    RESERVED = %w(if case when break unless end while until)
+    RESERVED = %w(case when break unless end until)
     def fix_varname(name)
         if RESERVED.include?(name) || name[0] == "_"
             "_#{name}"
@@ -83,15 +83,19 @@ class Tidy2Ruby < TidyTranspiler
             res
         elsif leaf.type == :character
             "Character.new(#{leaf.raw[1].ord})"
+
         elsif leaf.type == :infinity
             Infinity
+
         elsif leaf.type == :word
             "get_var(#{fix_varname(leaf.raw).inspect})"
+
         elsif leaf.type == :string
             inner = leaf.raw
                 .gsub(/""/, '"')[1..-2]
                 .gsub(/\\[nt\\]/) { eval '"' + $& + '"' }
             "'#{inner}'"
+
         elsif leaf.type == :pattern_string
             head = leaf.raw[0]
             inner = leaf.raw
@@ -102,6 +106,7 @@ class Tidy2Ruby < TidyTranspiler
                 res = "call_func(\"pt_#{head}\", #{res})"
             end
             res
+
         elsif leaf.type == :op_quote
             preindent = " " * 4 * @depth
             @depth += 1
@@ -176,8 +181,10 @@ class Tidy2Ruby < TidyTranspiler
             @depth -= 1
 
             res
+
         else
             STDERR.puts "unhandled leaf type #{leaf.type}"
+
         end
     end
 
@@ -217,9 +224,9 @@ class Tidy2Ruby < TidyTranspiler
                 "force(op_on(#{joined}))"
             when "^"
                 "op_caret(#{joined})"
-            when "if", "unless", "while", "until"
-                expr, cond = mapped
-                "#{expr} #{head.raw} truthy(#{cond})"
+            # when "if", "unless", "while", "until"
+            #     expr, cond = mapped
+            #     "#{expr} #{head.raw} truthy(#{cond})"
             when "and", "∧"
                 mapped.map { |e| "truthy(#{e})" }.join "&&"
             when "or", "∨"
@@ -360,6 +367,7 @@ class Tidy2Ruby < TidyTranspiler
             "#{transpile child}"
         }
         name = head.raw
+        sep = "; "
         case name
             when "break"
                 "raise TidyStopIteration if #{mapped.map{|e|"(#{e})"}.join "&&"}"
@@ -367,6 +375,18 @@ class Tidy2Ruby < TidyTranspiler
                 a, b, c = mapped.map { |e| "(#{e})" }
                 c ||= "nil"
                 "(#{a} ? #{b} : #{c})"
+            when "if"
+                cond, iftrue, other = mapped
+                res = "(if (#{cond})#{sep}#{iftrue}#{sep}"
+                unless other.nil?
+                    res += "else#{sep}#{other}#{sep}"
+                end
+                res += "end)#{sep}"
+            when "while"
+                cond, *body = mapped
+                res = "(while (#{cond})#{sep}"
+                res += body.join sep
+                res += "#{sep}end)"
             else
                 "call_func(#{head.raw.inspect}, #{mapped.join ", "})"
         end
