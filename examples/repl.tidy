@@ -1,5 +1,6 @@
 loop({
     line .= prompt("> ")
+    if(line = `\\x1A` or line = nil, exit(0))
     res .= evalsafe(line)
     if(res /= nil,
         out(res)

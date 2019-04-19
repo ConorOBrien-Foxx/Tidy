@@ -93,14 +93,14 @@ class Tidy2Ruby < TidyTranspiler
         elsif leaf.type == :string
             inner = leaf.raw
                 .gsub(/""/, '"')[1..-2]
-                .gsub(/\\[nt\\]/) { eval '"' + $& + '"' }
+                .gsub(/ \\[nt\\]/) { eval '"' + $& + '"' }
             "'#{inner}'"
 
         elsif leaf.type == :pattern_string
             head = leaf.raw[0]
             inner = leaf.raw
                 .gsub(/``/, '`')[2..-2]
-                .gsub(/\\[nt\\]/) { eval '"' + $& + '"' }
+                .gsub(/\\([nt\\]|x.{2})/) { eval '"' + $& + '"' }
             res = "'#{inner}'"
             unless head == '`'
                 res = "call_func(\"pt_#{head}\", #{res})"
