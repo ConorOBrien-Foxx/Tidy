@@ -6,7 +6,6 @@ class TidyTranspiler
     HEADER = []
     def initialize(code)
         @trees = ast code
-        p @trees
     end
 
     def code
