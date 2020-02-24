@@ -46,6 +46,7 @@ def shunt(code)
                     arity = 0 if previous_token&.type == :paren_open
                     output_queue << TidyToken.new(arity, :call_func)
                 else
+                    # do nothing
                 end
                 operator_stack.pop
 
@@ -55,16 +56,15 @@ def shunt(code)
                 arities << 1
 
             elsif token.type == :block_split
-                output_queue << TidyToken.atom(arities.pop)
+                output_queue << TidyToken.atom(arities.last)
                 output_queue << token
 
             elsif token.type == :block_close
+                # discard arity
+                arities.pop
                 flush(operator_stack, output_queue, initials)
                 operator_stack.pop
-                # p "block close", operator_stack
                 output_queue << token
-                # output_queue << operator_stack.pop
-
 
             elsif token.type == :range_open
                 operator_stack << token
