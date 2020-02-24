@@ -477,20 +477,21 @@ tidy_func_def(:int, global: false, &lambda { |e, *args|
 
 tidy_func_def(:count, global: false, &lambda { |a, e=:not_passed|
     if e == :not_passed
-        if a.respond_to? :size
-            a.size
-        else
-            case a
-                when Array, String
+        case a
+            when Array, String
+                a.size
+            when enum_like
+                a.force.size
+            when Numeric
+                a.abs.to_s.size
+            else
+                if a.respond_to? :size
+                    p 'kek', a
                     a.size
-                when enum_like
-                    a.force.size
-                when Numeric
-                    a.abs.to_s.size
                 else
-                    STDERR.puts "invalid argument passed to #{count}"
+                    STDERR.puts "Invalid argument passed to count"
                     raise
-            end
+                end
         end
     else
         case e
